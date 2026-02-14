@@ -1,0 +1,14 @@
+[project]
+name = "cmyk-system"
+version = "0.1.0"
+description = "Infrastructure configuration management for CMYK"
+authors = [
+  {name = "chrisntb", email = "chrisntb@example.org"}
+]
+license = {text = "UNLICENSED"}
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+  "ansible (==13.3.0)",
+  "ansible-dev-tools (==26.1.0)"
+]

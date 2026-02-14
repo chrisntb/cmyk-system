@@ -1,0 +1,66 @@
+---
+- name: Setup - KAI Scheduler
+  hosts: cluster_controller
+  become: false
+  vars:
+    # https://github.com/NVIDIA/KAI-Scheduler/releases
+    kai_scheduler_version: "v0.12.10"
+    kai_scheduler_chart: "oci://ghcr.io/nvidia/kai-scheduler/kai-scheduler"
+    kai_scheduler_namespace: "kai-scheduler"
+    kai_scheduler_name: "kai-scheduler"
+  tasks:
+    - name: Get regular user's home directory
+      ansible.builtin.command:
+        cmd: echo $HOME
+      register: user_home
+      changed_when: false
+
+    - name: Check if Kubernetes cluster is reachable
+      ansible.builtin.command:
+        cmd: kubectl cluster-info
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: cluster_check
+      failed_when: false
+      changed_when: false
+
+    - name: Display message if cluster is not reachable
+      ansible.builtin.debug:
+        msg: "Kubernetes cluster is not initialized or reachable. Please initialize the cluster before running this playbook."
+      when: cluster_check.rc != 0
+
+    - name: Fail if cluster is not reachable
+      ansible.builtin.fail:
+        msg: "Cannot proceed without a running Kubernetes cluster"
+      when: cluster_check.rc != 0
+
+    - name: Install KAI Scheduler using Helm
+      ansible.builtin.command:
+        cmd: >
+          helm install {{ kai_scheduler_name }} {{ kai_scheduler_chart }}
+          --version {{ kai_scheduler_version }}
+          --namespace {{ kai_scheduler_namespace }}
+          --create-namespace
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: helm_install_result
+      changed_when: "'STATUS: deployed' in helm_install_result.stdout"
+      failed_when:
+        - helm_install_result.rc != 0
+        - "'already exists' not in helm_install_result.stderr"
+
+    - name: Display installation result
+      ansible.builtin.debug:
+        var: helm_install_result.stdout_lines
+
+    - name: Check KAI Scheduler deployment status
+      ansible.builtin.command:
+        cmd: helm status {{ kai_scheduler_name }} --namespace {{ kai_scheduler_namespace }}
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: helm_status
+      changed_when: false
+
+    - name: Display KAI Scheduler status
+      ansible.builtin.debug:
+        var: helm_status.stdout_lines

@@ -1,0 +1,63 @@
+---
+- name: Setup - Prerequisites
+  hosts: cluster
+  become: true
+  tasks:
+    - name: Update APT cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Upgrade all packages
+      ansible.builtin.apt:
+        upgrade: dist
+      notify: Reboot if required
+
+    - name: Install packages
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gpg
+        state: present
+        update_cache: true
+
+    - name: Disable swap immediately
+      ansible.builtin.command: swapoff -a
+      changed_when: true
+      when: ansible_facts.swaptotal_mb > 0
+
+    - name: Disable swap permanently
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: '([[:space:]]swap[[:space:]])'
+        replace: '#\1'
+
+    - name: Load br_netfilter module
+      community.general.modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: Ensure br_netfilter loads on boot
+      ansible.builtin.lineinfile:
+        path: /etc/modules-load.d/k8s.conf
+        line: br_netfilter
+        create: true
+        mode: "0644"
+
+    - name: Set sysctl settings for Kubernetes
+      ansible.posix.sysctl:
+        name: "{{ item }}"
+        value: '1'
+        state: present
+        sysctl_file: /etc/sysctl.d/k8s.conf
+        reload: true
+      loop:
+        - net.ipv4.ip_forward
+        - net.bridge.bridge-nf-call-iptables
+        - net.bridge.bridge-nf-call-ip6tables
+
+  handlers:
+    - name: Reboot if required
+      ansible.builtin.reboot:

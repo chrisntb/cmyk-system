@@ -1,0 +1,40 @@
+---
+- name: Check - K8s
+  hosts: cluster_controller
+  become: false
+  tasks:
+    - name: Get all nodes
+      ansible.builtin.command:
+        cmd: kubectl get nodes
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: nodes_output
+      changed_when: false
+
+    - name: Display nodes
+      ansible.builtin.debug:
+        var: nodes_output.stdout_lines
+
+    - name: Get all pods across all namespaces
+      ansible.builtin.command:
+        cmd: kubectl get pods --all-namespaces
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: pods_output
+      changed_when: false
+
+    - name: Display pods
+      ansible.builtin.debug:
+        var: pods_output.stdout_lines
+
+    - name: Get all services across all namespaces
+      ansible.builtin.command:
+        cmd: kubectl get svc --all-namespaces
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: services_output
+      changed_when: false
+
+    - name: Display services
+      ansible.builtin.debug:
+        var: services_output.stdout_lines

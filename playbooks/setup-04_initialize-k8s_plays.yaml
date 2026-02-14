@@ -1,0 +1,68 @@
+---
+- name: Setup - Initialize K8s
+  hosts: cluster_controller
+  become: true
+  vars:
+    pod_network_cidr: "10.244.0.0/16"
+    service_cidr: "10.96.0.0/12"
+  tasks:
+    - name: Check if Kubernetes cluster is already initialized
+      ansible.builtin.stat:
+        path: /etc/kubernetes/admin.conf
+      register: kubeadm_init_check
+
+    - name: Initialize Kubernetes cluster with kubeadm
+      ansible.builtin.command:
+        cmd: >
+          kubeadm init
+          --pod-network-cidr={{ pod_network_cidr }}
+          --service-cidr={{ service_cidr }}
+      register: kubeadm_init_result
+      changed_when: true
+      when: not kubeadm_init_check.stat.exists
+
+    - name: Display kubeadm init output
+      ansible.builtin.debug:
+        var: kubeadm_init_result.stdout_lines
+      when: not kubeadm_init_check.stat.exists
+
+    - name: Get connection username
+      ansible.builtin.command:
+        cmd: whoami
+      become: false
+      register: connection_user
+      changed_when: false
+
+    - name: Get regular user's home directory
+      ansible.builtin.command:
+        cmd: echo $HOME
+      become: false
+      register: user_home
+      changed_when: false
+
+    - name: Create .kube directory for regular user
+      ansible.builtin.file:
+        path: "{{ user_home.stdout }}/.kube"
+        state: directory
+        owner: "{{ connection_user.stdout }}"
+        group: "{{ connection_user.stdout }}"
+        mode: '0755'
+
+    - name: Copy admin.conf to user's kube config
+      ansible.builtin.copy:
+        src: /etc/kubernetes/admin.conf
+        dest: "{{ user_home.stdout }}/.kube/config"
+        remote_src: true
+        owner: "{{ connection_user.stdout }}"
+        group: "{{ connection_user.stdout }}"
+        mode: '0600'
+
+    - name: Display cluster initialization status
+      ansible.builtin.debug:
+        msg: "Kubernetes cluster has been initialized"
+      when: not kubeadm_init_check.stat.exists
+
+    - name: Display cluster already initialized message
+      ansible.builtin.debug:
+        msg: "Kubernetes cluster is already initialized"
+      when: kubeadm_init_check.stat.exists

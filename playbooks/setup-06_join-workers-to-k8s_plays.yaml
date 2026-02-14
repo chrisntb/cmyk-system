@@ -1,0 +1,68 @@
+---
+- name: Setup - Join Workers to K8s
+  hosts: cluster_controller
+  become: true
+  tasks:
+    - name: Generate join command for worker nodes
+      ansible.builtin.command:
+        cmd: kubeadm token create --print-join-command
+      register: join_command_output
+      changed_when: false
+
+    - name: Set join command fact
+      ansible.builtin.set_fact:
+        join_command: "{{ join_command_output.stdout }}"
+
+- name: Join worker nodes to cluster
+  hosts: cluster_workers
+  become: true
+  tasks:
+    - name: Check if node is already joined to cluster
+      ansible.builtin.stat:
+        path: /etc/kubernetes/kubelet.conf
+      register: kubelet_conf_check
+
+    - name: Join node to cluster
+      ansible.builtin.command:
+        cmd: "{{ hostvars['cluster_controller']['join_command'] }}"
+      changed_when: true
+      when: not kubelet_conf_check.stat.exists
+      register: join_result
+
+    - name: Display join result
+      ansible.builtin.debug:
+        var: join_result.stdout_lines
+      when: not kubelet_conf_check.stat.exists
+
+    - name: Display already joined message
+      ansible.builtin.debug:
+        msg: "Node is already part of the cluster"
+      when: kubelet_conf_check.stat.exists
+
+- name: Wait for worker nodes to be ready
+  hosts: cluster_controller
+  become: false
+  tasks:
+    - name: Pause before checking nodes
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Wait for all nodes to be ready
+      ansible.builtin.command:
+        cmd: kubectl wait --for=condition=ready node --all --timeout=300s
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: nodes_ready
+      changed_when: false
+
+    - name: Display nodes status
+      ansible.builtin.command:
+        cmd: kubectl get nodes
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: nodes_status
+      changed_when: false
+
+    - name: Show nodes
+      ansible.builtin.debug:
+        var: nodes_status.stdout_lines

@@ -1,0 +1,22 @@
+{
+  "model": "sonnet",
+  "permissions": {
+    "deny": [
+      "Read(.ansible)",
+      "Glob(.ansible)",
+      "Grep(.ansible)",
+      "Read(.git)",
+      "Glob(.git)",
+      "Grep(.git)",
+      "Read(.secrets)",
+      "Glob(.secrets)",
+      "Grep(.secrets)",
+      "Read(.venv)",
+      "Glob(.venv)",
+      "Grep(.venv)",
+      "Read(tmp)",
+      "Glob(tmp)",
+      "Grep(tmp)"
+    ]
+  }
+}

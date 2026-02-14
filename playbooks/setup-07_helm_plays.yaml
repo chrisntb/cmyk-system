@@ -1,0 +1,54 @@
+---
+- name: Setup - Helm
+  hosts: cluster_controller
+  become: true
+  gather_facts: true
+  vars:
+    # https://github.com/helm/helm/releases
+    helm_version: "4.1.0"
+  tasks:
+    - name: Set architecture to arm64
+      ansible.builtin.set_fact:
+        helm_arch: "linux-arm64"
+      when: ansible_facts['architecture'] == 'aarch64'
+
+    - name: Set architecture to amd64
+      ansible.builtin.set_fact:
+        helm_arch: "linux-amd64"
+      when: ansible_facts['architecture'] != 'aarch64'
+
+    - name: Download Helm
+      ansible.builtin.get_url:
+        url: "https://get.helm.sh/helm-v{{ helm_version }}-{{ helm_arch }}.tar.gz"
+        dest: "/tmp/helm-v{{ helm_version }}-{{ helm_arch }}.tar.gz"
+        mode: '0644'
+
+    - name: Extract Helm archive
+      ansible.builtin.unarchive:
+        src: "/tmp/helm-v{{ helm_version }}-{{ helm_arch }}.tar.gz"
+        dest: /tmp
+        remote_src: true
+
+    - name: Move Helm binary to /usr/local/bin
+      ansible.builtin.copy:
+        src: "/tmp/{{ helm_arch }}/helm"
+        dest: /usr/local/bin/helm
+        mode: '0755'
+        remote_src: true
+
+    - name: Remove Helm archive and extracted files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/helm-v{{ helm_version }}-{{ helm_arch }}.tar.gz"
+        - "/tmp/{{ helm_arch }}"
+
+    - name: Verify Helm installation
+      ansible.builtin.command: helm version --short
+      register: helm_version_output
+      changed_when: false
+
+    - name: Display Helm version
+      ansible.builtin.debug:
+        var: helm_version_output.stdout

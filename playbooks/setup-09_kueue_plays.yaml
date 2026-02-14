@@ -1,0 +1,61 @@
+---
+- name: Setup - Kueue
+  hosts: cluster_controller
+  become: false
+  vars:
+    # https://github.com/kubernetes-sigs/kueue/releases
+    kueue_version: "0.16.0"
+    kueue_manifest_url: "https://github.com/kubernetes-sigs/kueue/releases/download/v{{ kueue_version }}/manifests.yaml"
+  tasks:
+    - name: Get regular user's home directory
+      ansible.builtin.command:
+        cmd: echo $HOME
+      register: user_home
+      changed_when: false
+
+    - name: Check if Kubernetes cluster is reachable
+      ansible.builtin.command:
+        cmd: kubectl cluster-info
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: cluster_check
+      failed_when: false
+      changed_when: false
+
+    - name: Display message if cluster is not reachable
+      ansible.builtin.debug:
+        msg: "Kubernetes cluster is not initialized or reachable. Please initialize the cluster before running this playbook."
+      when: cluster_check.rc != 0
+
+    - name: Fail if cluster is not reachable
+      ansible.builtin.fail:
+        msg: "Cannot proceed without a running Kubernetes cluster"
+      when: cluster_check.rc != 0
+
+    - name: Install Kueue using kubectl
+      ansible.builtin.command:
+        cmd: kubectl apply --server-side -f {{ kueue_manifest_url }}
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: kubectl_apply_result
+      changed_when: "'created' in kubectl_apply_result.stdout or 'configured' in kubectl_apply_result.stdout"
+
+    - name: Display installation result
+      ansible.builtin.debug:
+        var: kubectl_apply_result.stdout_lines
+
+    - name: Pause before checking Kueue controller
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Wait for Kueue controller to be ready
+      ansible.builtin.command:
+        cmd: kubectl rollout status deployment/kueue-controller-manager -n kueue-system --timeout=120s
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: rollout_status
+      changed_when: false
+
+    - name: Display Kueue controller status
+      ansible.builtin.debug:
+        var: rollout_status.stdout_lines

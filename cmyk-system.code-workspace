@@ -1,0 +1,52 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		// >- Recommended settings
+		"chat.disableAIFeatures": true,
+		"editor.insertSpaces": true,
+		"editor.minimap.enabled": false,
+		"editor.tabSize": 2,
+		"editor.wordWrap": "on",
+		"editor.wordWrapColumn": 1000,
+		"explorer.confirmDelete": false,
+		"files.autoSave": "afterDelay",
+		"files.autoSaveDelay": 2500,
+		"files.insertFinalNewline": true,
+		"files.trimTrailingWhitespace": true,
+		"git.autofetch": true,
+		"git.confirmSync": false,
+		"git.detectSubmodules": true,
+		"git.detectSubmodulesLimit": 42,
+		"git.inputValidation": true,
+		"git.openRepositoryInParentFolders": "never",
+		"scm.alwaysShowRepositories": true,
+		"workbench.editor.tabSizing": "fit",
+		"workbench.startupEditor": "newUntitledFile",
+    // <- Recommended settings
+		"ansible.python.interpreterPath": "${workspaceFolder}/.venv/bin/python",
+		"files.associations": {
+			"*plays.yaml": "ansible",
+			"*init.yaml": "yaml"
+		},
+		"files.watcherExclude": {
+			"**/.mypy_cache": true,
+			"**/.pytest_cache": true,
+			"**/.venv": true,
+			"**/__pycache__": true,
+		},
+		"python.terminal.activateEnvironment": false,
+		"[python]": {
+			"editor.defaultFormatter": "charliermarsh.ruff",
+			"editor.codeActionsOnSave": {
+				"source.fixAll": "explicit",
+				"source.organizeImports": "explicit",
+			},
+			"editor.insertSpaces": true,
+			"editor.tabSize": 2,
+		}
+	}
+}

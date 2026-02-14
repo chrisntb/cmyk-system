@@ -1,0 +1,3 @@
+* linguist-language=Python
+LICENSE linguist-language=Text
+*.md linguist-language=Markdown
