@@ -33,6 +33,8 @@ Initialize the virtual environment:
 # Note 'uv' automatically infers the virtual environment
 uv sync
 
+# Activate the virtual environment
+# -> For this shell alias see the 'Prerequisites' instructions
 venv
 ```
 
@@ -94,6 +96,8 @@ Initialize the virtual environment:
 # Note 'uv' automatically infers the virtual environment
 uv sync
 
+# Activate the virtual environment
+# -> For this shell alias see the 'Prerequisites' instructions
 venv
 ```
 
