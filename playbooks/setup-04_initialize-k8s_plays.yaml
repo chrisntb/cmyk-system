@@ -3,9 +3,16 @@
   hosts: cluster_controller
   become: true
   vars:
-    pod_network_cidr: "10.244.0.0/16"
-    service_cidr: "10.96.0.0/12"
+    pod_network_cidr: ""
+    service_cidr: ""
   tasks:
+    - name: Assert required variables are set
+      ansible.builtin.assert:
+        that:
+          - pod_network_cidr | length > 0
+          - service_cidr | length > 0
+        fail_msg: "Required variables must be passed in: pod_network_cidr, service_cidr"
+
     - name: Check if Kubernetes cluster is already initialized
       ansible.builtin.stat:
         path: /etc/kubernetes/admin.conf

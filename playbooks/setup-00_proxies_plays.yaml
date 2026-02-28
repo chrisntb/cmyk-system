@@ -1,0 +1,52 @@
+---
+- name: Setup - Proxies
+  hosts: cluster
+  become: true
+  vars:
+    http_proxy: ""
+    https_proxy: "{{ http_proxy }}"
+    pod_network_cidr: ""
+    service_cidr: ""
+    node_ips: ""
+    no_proxy: "localhost,127.0.0.1,.svc,.cluster.local,{{ pod_network_cidr }},{{ service_cidr }},{{ node_ips }}"
+  tasks:
+    - name: Assert required variables are set
+      ansible.builtin.assert:
+        that:
+          - http_proxy | length > 0
+          - pod_network_cidr | length > 0
+          - service_cidr | length > 0
+          - node_ips | length > 0
+        fail_msg: "Required variables must be passed in: http_proxy, pod_network_cidr, service_cidr, node_ips"
+
+    - name: Set http_proxy in /etc/environment
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        regexp: '^http_proxy='
+        line: "http_proxy={{ http_proxy }}"
+
+    - name: Set https_proxy in /etc/environment
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        regexp: '^https_proxy='
+        line: "https_proxy={{ https_proxy }}"
+
+    - name: Set no_proxy in /etc/environment
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        regexp: '^no_proxy='
+        line: "no_proxy={{ no_proxy }}"
+
+    - name: Ensure /etc/systemd/system.conf.d/ exists
+      ansible.builtin.file:
+        path: /etc/systemd/system.conf.d
+        state: directory
+        mode: '0755'
+
+    - name: Create /etc/systemd/system.conf.d/99-proxy.conf
+      ansible.builtin.copy:
+        dest: /etc/systemd/system.conf.d/99-proxy.conf
+        content: |
+          [Manager]
+          DefaultEnvironment="http_proxy={{ http_proxy }}" "https_proxy={{ https_proxy }}" "no_proxy={{ no_proxy }}"
+        mode: '0644'

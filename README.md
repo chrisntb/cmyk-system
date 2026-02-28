@@ -101,13 +101,40 @@ uv sync
 venv
 ```
 
+Decide on the IPs for the cluster:
+
+```shell
+# If the nodes are in a private network
+HTTP_PROXY="http://proxy.example.com:####"
+
+POD_NETWORK_CIDR="10.244.0.0/16"  # K8s default
+SERVICE_CIDR="10.96.0.0/12"       # K8s default
+
+ # Use your own node IPs
+NODE_IPS="###.###.###,..."
+```
+
+If the nodes are in a private network, set the proxy configuration on all nodes:
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup-00_proxies_plays.yaml \
+  -e http_proxy=${HTTP_PROXY} \
+  -e pod_network_cidr=${POD_NETWORK_CIDR} \
+  -e service_cidr=${SERVICE_CIDR} \
+  -e node_ips=${NODE_IPS}
+```
+
 Create the cluster:
 
 ```shell
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup-01_prerequisites_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup-02_container-runtime_cri-o_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup-03_k8s_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup-04_initialize-k8s_plays.yaml
+
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup-04_initialize-k8s_plays.yaml \
+  -e pod_network_cidr=${POD_NETWORK_CIDR} \
+  -e service_cidr=${SERVICE_CIDR}
+
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup-05_cni_flannel_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup-06_join-workers-to-k8s_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup-07_helm_plays.yaml
