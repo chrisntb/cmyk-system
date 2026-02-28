@@ -1,4 +1,4 @@
-# K8s Cluster Example
+# K8s Cluster - Manual Example
 
 - [Overview](01_Overview.md)
 - [Setup](02_Setup.md)

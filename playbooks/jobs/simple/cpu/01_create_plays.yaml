@@ -1,0 +1,93 @@
+---
+- name: Job - CPU Create
+  hosts: cluster_controller
+  become: false
+  tasks:
+    - name: Apply test-cpu-python Pod
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubectl apply -f - <<'EOF'
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: test-cpu-python
+          spec:
+            restartPolicy: Never
+            containers:
+            - name: nvidia-cuda
+              image: nvidia/cuda:13.0.2-base-ubuntu22.04
+              envFrom:
+                - configMapRef:
+                    name: test-environment
+              env:
+                  # So we can see incremental progress
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+              command: ["/bin/sh", "-c"]
+              args:
+              - |
+                set -e
+                echo
+                echo "-------- Printing environment --------"
+                env
+                echo
+                echo "PYTHONUNBUFFERED=${PYTHONUNBUFFERED}"
+                echo "-"
+                echo
+                echo
+                echo "-------- Installing 'uv' --------"
+                apt-get -y clean && apt-get -y update && apt-get -y install curl
+                curl -LsSf https://astral.sh/uv/install.sh | sh
+                . /root/.local/bin/env
+                uv python install
+                echo "-"
+                echo
+                echo
+                echo "-------- Initializing project --------"
+                uv init project
+                cd project
+                cat <<'EOFF' > main.py
+                def main():
+                    print("Hello from a Python CPU job!")
+                if __name__ == "__main__":
+                    main()
+                EOFF
+                echo "-"
+                echo
+                echo
+                echo "-------- Creating project virtual environment --------"
+                uv venv --clear
+                echo "-"
+                echo
+                echo
+                echo "-------- Activating project virtual environment --------"
+                . .venv/bin/activate
+                echo "-"
+                echo
+                echo
+                echo "-------- Running job --------"
+                uv run main.py
+                echo "-"
+                echo
+              resources:
+                limits:
+                  cpu: 1
+          EOF
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: kubectl_result
+      changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"
+
+    - name: Describe test-cpu-python pod
+      ansible.builtin.command:
+        cmd: kubectl describe pod test-cpu-python
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: describe_output
+      changed_when: false
+
+    - name: Print pod description
+      ansible.builtin.debug:
+        msg: "{{ describe_output.stdout_lines }}"

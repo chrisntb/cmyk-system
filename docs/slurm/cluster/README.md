@@ -1,3 +1,0 @@
-# Slurm Cluster Example
-
-TODO

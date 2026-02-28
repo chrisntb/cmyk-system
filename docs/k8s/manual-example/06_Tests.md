@@ -1,4 +1,4 @@
-# K8s Cluster Example - Tests
+# K8s Cluster - Manual Example - Tests
 
 After you have setup the cluster, see [Setup](02_Setup.md), here are some basic tests that make sure the cluster can schedule work.
 These tests use existing containers and override their entry point with injected logic.

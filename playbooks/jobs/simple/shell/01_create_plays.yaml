@@ -1,0 +1,53 @@
+---
+- name: Job - Shell Create
+  hosts: cluster_controller
+  become: false
+  tasks:
+    - name: Apply test-container-environment Pod
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubectl apply -f - <<'EOF'
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: test-container-environment
+          spec:
+            restartPolicy: Never
+            containers:
+            - name: nvidia-cuda
+              image: nvidia/cuda:13.0.2-base-ubuntu22.04
+              envFrom:
+                - configMapRef:
+                    name: test-environment
+              command: ["/bin/sh", "-c"]
+              args:
+              - |
+                set -e
+
+                echo
+                echo "-------- Printing environment --------"
+                env
+                echo "-"
+                echo
+              resources:
+                limits:
+                  cpu: 1
+          EOF
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: kubectl_result
+      changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"
+
+    - name: Describe test-container-environment pod
+      ansible.builtin.command:
+        cmd: kubectl describe pod test-container-environment
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: describe_output
+      changed_when: false
+
+    - name: Print pod description
+      ansible.builtin.debug:
+        msg: "{{ describe_output.stdout_lines }}"

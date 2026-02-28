@@ -3,13 +3,13 @@
 Make sure you are using nodes that have large enough disks.
 After installing K8s the node disk usage `sudo du -h -d 1 /` was as follows:
 
-- Multipass, Ubuntu 24.04 LTS
-  - Controller `5.7G`
-  - Worker - Compute `5G`
-- Bare metal, Ubuntu 24.04 LTS
+- Private Bare Metal, Ubuntu 24.04 LTS
   - Controller `15G`
   - Worker - Compute `20G`
   - Worker - GPU `36G`
+- Multipass Virtual Machines, Ubuntu 24.04 LTS
+  - Controller `5.7G`
+  - Worker - Compute `5G`
 
 Make sure you are using nodes that have enough cores and memory.
 We received these errors when initially testing with very small virtual machines:
@@ -18,6 +18,21 @@ We received these errors when initially testing with very small virtual machines
 [ERROR NumCPU]: the number of available CPUs 1 is less than the required 2
 [ERROR Mem]: the system RAM (955 MB) is less than the minimum 1700 MB
 ```
+
+## Private Bare Metal Nodes
+
+In order to run the playbooks you will need:
+
+- Your public key added to the proxy you intend to use
+- Aliases in your `${HOME}/.ssh/config`
+
+```text
+Include ~/.ssh/ssh_config_proxy.inc
+```
+
+For example, see [../etc/ssh_config_proxy.inc](../etc/ssh_config_proxy.inc).
+
+## Multipass Virtual Machines Nodes
 
 Using Canonical's Multipass, create these nodes; this is sufficient for initial development:
 
@@ -62,41 +77,14 @@ Note when Multipass creates a node, it adds a public SSH key to the node's `.ssh
 sudo ssh-keygen -y -f /var/snap/multipass/common/data/multipassd/ssh-keys/id_rsa
 ```
 
-## Proxy
-
 In order to run the playbooks you will need:
 
-- Your public key added to all hosts in the inventory
-  - See previous section
+- Your public key added to all hosts in the `inventory`
+  - See instructions above
 - Aliases in your `${HOME}/.ssh/config`
 
 ```text
-Host *
-    ServerAliveInterval 30
-    ServerAliveCountMax 2
-
-Host ctl
-    HostName <Controller IP>
-    User ubuntu
-    IdentityFile ~/.ssh/<Your Private Key>
-    IdentitiesOnly yes
-
-Host wrk-hpc-1
-    HostName <HPC Worker 1 IP>
-    User ubuntu
-    IdentityFile ~/.ssh/<Your Private Key>
-    IdentitiesOnly yes
-
-Host wrk-hpc-2
-    HostName <HPC Worker 2 IP>
-    User ubuntu
-    IdentityFile ~/.ssh/<Your Private Key>
-    IdentitiesOnly yes
-
-# At first support a client interface to the cluster - no mgt services required
-#Host wrk-mgt-1
-#    HostName <Management Worker 1 IP>
-#    User ubuntu
-#    IdentityFile ~/.ssh/<Your Private Key>
-#    IdentitiesOnly yes
+Include ~/.ssh/ssh_config.inc
 ```
+
+For example, see [../etc/ssh_config.inc](../etc/ssh_config.inc).

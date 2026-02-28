@@ -1,4 +1,4 @@
-# K8s Cluster Example - Setup
+# K8s Cluster - Manual Example - Setup
 
 These instruction were adapted from the official installation instructions:
 

@@ -1,4 +1,4 @@
-# K8s Cluster Example - Setup Nvidia GPU Operator
+# K8s Cluster - Manual Example - Setup Nvidia GPU Operator
 
 > In order to setup the Nvidia GPU Operator you must first have completed the Ad Hoc Cluster setup tasks, see [Setup](02_Setup.md)
 

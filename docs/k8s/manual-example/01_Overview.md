@@ -1,4 +1,4 @@
-# K8s Cluster Example - Overview
+# K8s Cluster - Manual Example - Overview
 
 This is an ad hoc standalone cluster with all required supporting services in order that there are no dependencies/blockers.
 The machines should be wiped when you are finished with the cluster.

@@ -1,4 +1,4 @@
-# K8s Cluster Example - Setup Kueue
+# K8s Cluster - Manual Example - Setup Kueue
 
 > In order to setup Kueue you must first have completed the Ad Hoc Cluster setup tasks, see [Setup](02_Setup.md)
 

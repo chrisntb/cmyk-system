@@ -8,7 +8,36 @@
     gpu_operator_chart: "nvidia/gpu-operator"
     gpu_operator_namespace: "gpu-operator"
     gpu_operator_name: "nvidia-gpu-operator"
+
+    use_proxy: ""
+    _proxy_enabled: "{{ use_proxy | string | lower == 'yes' }}"
+
+    http_proxy: ""
+    https_proxy: "{{ http_proxy }}"
+    pod_network_cidr: ""
+    service_cidr: ""
+    node_ips: ""
+    no_proxy: "localhost,127.0.0.1,.svc,.cluster.local,{{ pod_network_cidr }},{{ service_cidr }},{{ node_ips }}"
+
+    gpu_operator_values_file: "/tmp/nvidia-gpu-operator-values.yaml"
+    gpu_operator_values_arg: "{{ '-f ' + gpu_operator_values_file if _proxy_enabled else '' }}"
   tasks:
+    - name: Assert use_proxy is provided and valid
+      ansible.builtin.assert:
+        that:
+          - use_proxy | string | lower in ['yes', 'no']
+        fail_msg: "use_proxy must be passed in as 'yes' or 'no'"
+
+    - name: Assert required proxy variables are set
+      ansible.builtin.assert:
+        that:
+          - http_proxy | length > 0
+          - pod_network_cidr | length > 0
+          - service_cidr | length > 0
+          - node_ips | length > 0
+        fail_msg: "Required variables must be passed in: http_proxy, pod_network_cidr, service_cidr, node_ips"
+      when: _proxy_enabled
+
     - name: Get regular user's home directory
       ansible.builtin.command:
         cmd: echo $HOME
@@ -34,6 +63,21 @@
         msg: "Cannot proceed without a running Kubernetes cluster"
       when: cluster_check.rc != 0
 
+    - name: Create Nvidia GPU Operator values file
+      ansible.builtin.copy:
+        dest: "{{ gpu_operator_values_file }}"
+        content: |
+          driver:
+            env:
+              - name: http_proxy
+                value: {{ http_proxy }}
+              - name: https_proxy
+                value: {{ https_proxy }}
+              - name: no_proxy
+                value: {{ no_proxy }}
+        mode: '0644'
+      when: _proxy_enabled
+
     - name: Install Nvidia GPU Operator using Helm
       ansible.builtin.command:
         cmd: >
@@ -42,6 +86,7 @@
           --namespace {{ gpu_operator_namespace }}
           --create-namespace
           --kubeconfig {{ user_home.stdout }}/.kube/config
+          {{ gpu_operator_values_arg }}
       register: helm_install_result
       changed_when: "'STATUS: deployed' in helm_install_result.stdout"
       failed_when:

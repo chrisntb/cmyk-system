@@ -1,4 +1,4 @@
-# K8s Cluster Example - Setup KAI Scheduler
+# K8s Cluster - Manual Example - Setup KAI Scheduler
 
 > In order to setup the KAI Scheduler you must first have completed the Ad Hoc Cluster setup tasks, see [Setup](02_Setup.md)
 

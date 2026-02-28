@@ -1,0 +1,42 @@
+---
+- name: Job - Proxies
+  hosts: cluster_controller
+  become: false
+  vars:
+    http_proxy: ""
+    https_proxy: "{{ http_proxy }}"
+    pod_network_cidr: ""
+    service_cidr: ""
+    node_ips: ""
+    no_proxy: "localhost,127.0.0.1,.svc,.cluster.local,{{ pod_network_cidr }},{{ service_cidr }},{{ node_ips }}"
+  tasks:
+    - name: Assert required variables are set
+      ansible.builtin.assert:
+        that:
+          - http_proxy | length > 0
+          - pod_network_cidr | length > 0
+          - service_cidr | length > 0
+          - node_ips | length > 0
+        fail_msg: "Required variables must be passed in: http_proxy, pod_network_cidr, service_cidr, node_ips"
+
+    - name: Write test-environment ConfigMap manifest
+      ansible.builtin.copy:
+        dest: /tmp/test-environment.yaml
+        content: |
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: test-environment
+          data:
+            http_proxy: "{{ http_proxy }}"
+            https_proxy: "{{ https_proxy }}"
+            no_proxy: "{{ no_proxy }}"
+        mode: '0644'
+
+    - name: Apply test-environment ConfigMap
+      ansible.builtin.command:
+        cmd: kubectl apply -f /tmp/test-environment.yaml
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: kubectl_result
+      changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"

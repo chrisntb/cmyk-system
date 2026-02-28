@@ -1,4 +1,4 @@
-# K8s Cluster Example - Setup Container Runtime - CRI-O
+# K8s Cluster - Manual Example - Setup Container Runtime - CRI-O
 
 > In order to setup the Container Runtime CRI-O, you must first have completed the Ad Hoc Cluster setup prerequisite tasks, see [Setup](02_Setup.md)
 

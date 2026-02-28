@@ -48,5 +48,7 @@
         dest: /etc/systemd/system.conf.d/99-proxy.conf
         content: |
           [Manager]
-          DefaultEnvironment="http_proxy={{ http_proxy }}" "https_proxy={{ https_proxy }}" "no_proxy={{ no_proxy }}"
+          DefaultEnvironment="http_proxy={{ http_proxy }}"
+          DefaultEnvironment="https_proxy={{ https_proxy }}"
+          DefaultEnvironment="no_proxy={{ no_proxy }}"
         mode: '0644'

@@ -1,4 +1,4 @@
-# K8s Cluster Example - Setup Monitoring
+# K8s Cluster - Manual Example - Setup Monitoring
 
 After you have setup the cluster, see [Setup](02_Setup.md), setup monioring.
 

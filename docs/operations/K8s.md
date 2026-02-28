@@ -1,5 +1,15 @@
 # Operations - K8s
 
+## Systemd
+
+```shell
+systemctl status containerd
+# OR
+systemctl status crio
+
+systemctl status kubelet
+```
+
 ## Shell Aliases
 
 Convenient shell aliases:
@@ -187,10 +197,13 @@ kubectl delete pod <pod name>
 ## Logs
 
 ```shell
-kubectl get pods --all-namespaces -o wide
+kubectl get pods --all-namespaces --show-labels -o wide | grep nvidia-driver-daemonset
+kubectl logs -n gpu-operator nvidia-driver-daemonset-bnbtq
+
+kubectl get pods --all-namespaces -o wide | grep kube-flannel
 kubectl logs -n kube-flannel kube-flannel-ds-5j5ch
 
-kubectl get deployments -n monitoring
+kubectl get deployments -n monitoring| grep kube-prometheus
 kubectl logs -n monitoring deployment/kube-prometheus-stack-operator
 ```
 
