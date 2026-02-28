@@ -3,7 +3,7 @@
   hosts: cluster_controller
   become: false
   tasks:
-    - name: Apply test-container-environment Pod
+    - name: Apply test-shell Pod
       ansible.builtin.shell:
         cmd: |
           set -o pipefail
@@ -11,7 +11,7 @@
           apiVersion: v1
           kind: Pod
           metadata:
-            name: test-container-environment
+            name: test-shell
           spec:
             restartPolicy: Never
             containers:
@@ -40,9 +40,9 @@
       register: kubectl_result
       changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"
 
-    - name: Describe test-container-environment pod
+    - name: Describe test-shell pod
       ansible.builtin.command:
-        cmd: kubectl describe pod test-container-environment
+        cmd: kubectl describe pod test-shell
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
       register: describe_output

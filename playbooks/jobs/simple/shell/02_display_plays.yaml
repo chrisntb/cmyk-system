@@ -2,6 +2,8 @@
 - name: Job - Shell Display
   hosts: cluster_controller
   become: false
+  vars:
+    pod_name: "test-shell"
   tasks:
     - name: Get all pods across all namespaces
       ansible.builtin.command:
@@ -15,9 +17,9 @@
       ansible.builtin.debug:
         var: pods_output.stdout_lines
 
-    - name: Describe test-container-environment pod
+    - name: Describe pod {{ pod_name }}
       ansible.builtin.command:
-        cmd: kubectl describe pod test-container-environment
+        cmd: kubectl describe pod {{ pod_name }}
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
       register: describe_output
@@ -27,27 +29,5 @@
       ansible.builtin.debug:
         msg: "{{ describe_output.stdout_lines }}"
 
-    - name: Get test-container-environment logs
-      ansible.builtin.command:
-        cmd: kubectl logs test-container-environment
-      environment:
-        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
-      register: logs_output
-      changed_when: false
-
-    - name: Print pod logs
-      ansible.builtin.debug:
-        msg: "{{ logs_output.stdout_lines }}"
-
-    - name: Prompt to delete test-container-environment pod
-      ansible.builtin.pause:
-        prompt: "Delete pod 'test-container-environment'? [yes/no]"
-      register: delete_prompt
-
-    - name: Delete test-container-environment pod
-      ansible.builtin.command:
-        cmd: kubectl delete pod test-container-environment
-      environment:
-        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
-      changed_when: true
-      when: delete_prompt.user_input | lower == 'yes'
+    - name: Run action menu
+      ansible.builtin.include_tasks: ../../tasks/display_menu.yaml
