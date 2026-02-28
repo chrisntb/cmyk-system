@@ -8,11 +8,15 @@
     parent_queue_gpu_limit: ""
     parent_queue_cpu_quota: ""
     parent_queue_cpu_limit: ""
+    parent_queue_memory_quota: ""
+    parent_queue_memory_limit: ""
     child_queue_name: ""
     child_queue_gpu_quota: ""
     child_queue_gpu_limit: ""
     child_queue_cpu_quota: ""
     child_queue_cpu_limit: ""
+    child_queue_memory_quota: ""
+    child_queue_memory_limit: ""
   tasks:
     - name: Assert required variables are set
       ansible.builtin.assert:
@@ -22,19 +26,25 @@
           - parent_queue_gpu_limit | length > 0
           - parent_queue_cpu_quota | length > 0
           - parent_queue_cpu_limit | length > 0
+          - parent_queue_memory_quota | length > 0
+          - parent_queue_memory_limit | length > 0
           - child_queue_name | length > 0
           - child_queue_gpu_quota | length > 0
           - child_queue_gpu_limit | length > 0
           - child_queue_cpu_quota | length > 0
           - child_queue_cpu_limit | length > 0
+          - child_queue_memory_quota | length > 0
+          - child_queue_memory_limit | length > 0
         fail_msg: >-
           Required variables must be passed in:
           parent_queue_name,
           parent_queue_gpu_quota, parent_queue_gpu_limit,
           parent_queue_cpu_quota, parent_queue_cpu_limit,
+          parent_queue_memory_quota, parent_queue_memory_limit,
           child_queue_name,
           child_queue_gpu_quota, child_queue_gpu_limit,
-          child_queue_cpu_quota, child_queue_cpu_limit
+          child_queue_cpu_quota, child_queue_cpu_limit,
+          child_queue_memory_quota, child_queue_memory_limit
 
     - name: Apply parent Queue {{ parent_queue_name }}
       ansible.builtin.shell:
@@ -53,6 +63,9 @@
               cpu:
                 quota: {{ parent_queue_cpu_quota }}
                 limit: {{ parent_queue_cpu_limit }}
+              memory:
+                quota: {{ parent_queue_memory_quota }}
+                limit: {{ parent_queue_memory_limit }}
           EOF
         executable: /bin/bash
       environment:
@@ -78,6 +91,9 @@
               cpu:
                 quota: {{ child_queue_cpu_quota }}
                 limit: {{ child_queue_cpu_limit }}
+              memory:
+                quota: {{ child_queue_memory_quota }}
+                limit: {{ child_queue_memory_limit }}
           EOF
         executable: /bin/bash
       environment:

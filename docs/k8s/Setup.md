@@ -155,11 +155,15 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/02_kai-scheduler_tes
   -e parent_queue_gpu_limit=-1 \
   -e parent_queue_cpu_quota=-1 \
   -e parent_queue_cpu_limit=-1 \
+  -e parent_queue_memory_quota=-1 \
+  -e parent_queue_memory_limit=-1 \
   -e child_queue_name="team" \
   -e child_queue_gpu_quota=-1 \
   -e child_queue_gpu_limit=-1 \
   -e child_queue_cpu_quota=-1 \
-  -e child_queue_cpu_limit=-1
+  -e child_queue_cpu_limit=-1 \
+  -e child_queue_memory_quota=-1 \
+  -e child_queue_memory_limit=-1
 ```
 
 ### Test Cluster - Simple Jobs
