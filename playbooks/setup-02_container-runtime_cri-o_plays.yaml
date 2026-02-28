@@ -21,14 +21,26 @@
         crictl_arch: "linux-amd64"
       when: ansible_facts['architecture'] != 'aarch64'
 
-    - name: Add CRI-O apt repository key
+    - name: Ensure apt keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download CRI-O apt repository key
       vars:
         crio_repo_base: "https://download.opensuse.org/repositories"
         crio_repo_path: "isv:/cri-o:/stable:/v{{ crio_version }}/deb"
-      ansible.builtin.apt_key:
+      ansible.builtin.get_url:
         url: "{{ crio_repo_base }}/{{ crio_repo_path }}/Release.key"
-        keyring: /etc/apt/keyrings/cri-o-apt-keyring.gpg
-        state: present
+        dest: /tmp/cri-o-apt-keyring.asc
+        mode: '0644'
+        force: false
+
+    - name: Dearmor CRI-O apt repository key
+      ansible.builtin.shell:
+        cmd: gpg --dearmor < /tmp/cri-o-apt-keyring.asc > /etc/apt/keyrings/cri-o-apt-keyring.gpg
+        creates: /etc/apt/keyrings/cri-o-apt-keyring.gpg
 
     - name: Add CRI-O apt repository
       vars:

@@ -7,11 +7,23 @@
     # -> Latest patch will be used
     k8s_version: "1.35"
   tasks:
-    - name: Add Kubernetes apt repository key
-      ansible.builtin.apt_key:
+    - name: Ensure apt keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Kubernetes apt repository key
+      ansible.builtin.get_url:
         url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key"
-        keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-        state: present
+        dest: /tmp/kubernetes-apt-keyring.asc
+        mode: '0644'
+        force: false
+
+    - name: Dearmor Kubernetes apt repository key
+      ansible.builtin.shell:
+        cmd: gpg --dearmor < /tmp/kubernetes-apt-keyring.asc > /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
     - name: Add Kubernetes apt repository
       ansible.builtin.apt_repository:
