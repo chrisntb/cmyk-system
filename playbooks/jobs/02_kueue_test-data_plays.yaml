@@ -1,0 +1,125 @@
+---
+- name: Job - Kueue Test Data
+  hosts: cluster_controller
+  become: false
+  vars:
+    resource_flavor_name: ""
+    cluster_queue_name: ""
+    cluster_queue_cpu_quota: ""
+    cluster_queue_memory_quota: ""
+    cluster_queue_pods_quota: ""
+    local_queue_name: ""
+  tasks:
+    - name: Assert required variables are set
+      ansible.builtin.assert:
+        that:
+          - resource_flavor_name | length > 0
+          - cluster_queue_name | length > 0
+          - cluster_queue_cpu_quota | length > 0
+          - cluster_queue_memory_quota | length > 0
+          - cluster_queue_pods_quota | length > 0
+          - local_queue_name | length > 0
+        fail_msg: >-
+          Required variables must be passed in: resource_flavor_name,
+          cluster_queue_name, cluster_queue_cpu_quota,
+          cluster_queue_memory_quota, cluster_queue_pods_quota, local_queue_name
+
+    - name: Apply ResourceFlavor {{ resource_flavor_name }}
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubectl apply -f - <<'EOF'
+          apiVersion: kueue.x-k8s.io/v1beta2
+          kind: ResourceFlavor
+          metadata:
+            name: {{ resource_flavor_name }}  # Must exactly match ClusterQueue reference
+          EOF
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: kubectl_result
+      changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"
+
+    - name: Apply ClusterQueue {{ cluster_queue_name }}
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubectl apply -f - <<'EOF'
+          apiVersion: kueue.x-k8s.io/v1beta2
+          kind: ClusterQueue
+          metadata:
+            name: {{ cluster_queue_name }}
+          spec:
+            namespaceSelector: {} # match all
+            resourceGroups:
+            - coveredResources: ["cpu", "memory", "pods"]
+              flavors:
+              - name: {{ resource_flavor_name }}
+                resources:
+                - name: cpu
+                  nominalQuota: {{ cluster_queue_cpu_quota }}
+                - name: memory
+                  nominalQuota: {{ cluster_queue_memory_quota }}
+                - name: pods
+                  nominalQuota: {{ cluster_queue_pods_quota }}
+          EOF
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: kubectl_result
+      changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"
+
+    - name: Apply LocalQueue {{ local_queue_name }}
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubectl apply -f - <<'EOF'
+          apiVersion: kueue.x-k8s.io/v1beta2
+          kind: LocalQueue
+          metadata:
+            namespace: default
+            name: {{ local_queue_name }}
+          spec:
+            clusterQueue: {{ cluster_queue_name }}
+          EOF
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: kubectl_result
+      changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"
+
+    - name: Get ResourceFlavors
+      ansible.builtin.command:
+        cmd: kubectl get resourceflavors --all-namespaces -o wide
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: resourceflavors_output
+      changed_when: false
+
+    - name: Display ResourceFlavors
+      ansible.builtin.debug:
+        var: resourceflavors_output.stdout_lines
+
+    - name: Get ClusterQueues
+      ansible.builtin.command:
+        cmd: kubectl get clusterqueues --all-namespaces -o wide
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: clusterqueues_output
+      changed_when: false
+
+    - name: Display ClusterQueues
+      ansible.builtin.debug:
+        var: clusterqueues_output.stdout_lines
+
+    - name: Get LocalQueues
+      ansible.builtin.command:
+        cmd: kubectl get localqueues --all-namespaces -o wide
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: localqueues_output
+      changed_when: false
+
+    - name: Display LocalQueues
+      ansible.builtin.debug:
+        var: localqueues_output.stdout_lines

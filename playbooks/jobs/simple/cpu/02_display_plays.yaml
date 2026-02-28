@@ -1,9 +1,9 @@
 ---
-- name: Job - CPU Display
+- name: Job - Simple CPU Display
   hosts: cluster_controller
   become: false
   vars:
-    pod_name: "test-cpu-python"
+    pod_name: "test-simple-cpu-python"
   tasks:
     - name: Get all pods across all namespaces
       ansible.builtin.command:

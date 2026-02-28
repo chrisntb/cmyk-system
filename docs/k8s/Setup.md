@@ -40,7 +40,7 @@ venv
 Decide on the IPs for the cluster:
 
 ```shell
-# If the nodes are in a private network
+# If the nodes are in a private network make the network's proxy available to the nodes and K8s
 HTTP_PROXY="http://proxy.example.com:####"
 
 POD_NETWORK_CIDR="10.244.0.0/16"  # K8s default
@@ -78,7 +78,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/08_helm_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/09_helm-repositories_plays.yaml
 ```
 
-### Kueue
+### Create Cluster - Kueue
 
 Add `kueue` support for advanced job admission and placement logic integrating with the native scheduler:
 
@@ -86,7 +86,7 @@ Add `kueue` support for advanced job admission and placement logic integrating w
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/10_kueue_plays.yaml
 ```
 
-### KAI Scheduler
+### Create Cluster - KAI Scheduler
 
 Add `KAI Scheduler` support for advanced job admission and placement logic, replacing the native scheduler for certain workloads:
 
@@ -94,7 +94,7 @@ Add `KAI Scheduler` support for advanced job admission and placement logic, repl
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/11_kai-scheduler_plays.yaml
 ```
 
-### Nvidia GPU Operator
+### Create Cluster - Nvidia GPU Operator
 
 Add `Nvidia GPU Operator` to discover and configure GPU nodes:
 
@@ -114,6 +114,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_nvidia-gpu-opera
 ## Check Cluster
 
 ```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/01_ping-hosts_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/02_k8s_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/03_k8s-nodes_plays.yaml
 ```
@@ -137,7 +138,19 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/01_proxies_plays.yam
   -e node_ips=${NODE_IPS}
 ```
 
-Run `Simple` jobs:
+Create test data:
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/02_kueue_test-data_plays.yaml \
+  -e resource_flavor_name="default-flavor" \
+  -e cluster_queue_name="adhoc-cluster-queue" \
+  -e cluster_queue_cpu_quota=9 \
+  -e cluster_queue_memory_quota="36Gi" \
+  -e cluster_queue_pods_quota=5 \
+  -e local_queue_name="adhoc-local-queue"
+```
+
+### Test Cluster - Simple Jobs
 
 ```shell
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/shell/01_create_plays.yaml
@@ -150,12 +163,14 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/gpu/01_create
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/gpu/02_display_plays.yaml
 ```
 
-Run `Kueue` jobs:
+### Test Cluster - Kueue Jobs
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kueue/01_create_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kueue/02_display_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kueue/gpu/01_create_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kueue/gpu/02_display_plays.yaml
 ```
+
+### Test Cluster - KAI Scheduler Jobs
 
 Run `KAI Scheduler` jobs:
 

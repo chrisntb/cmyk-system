@@ -1,0 +1,70 @@
+---
+- name: Job - Kueue GPU Create
+  hosts: cluster_controller
+  become: false
+  vars:
+    pod_name: "test-kueue-gpu-python"
+    queue_name: "adhoc-local-queue"
+  tasks:
+    - name: Apply Pod {{ pod_name }}
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubectl create -f - <<'EOF'
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            generateName: {{ pod_name }}
+            namespace: default
+            labels:
+              kueue.x-k8s.io/queue-name: {{ queue_name }}
+          spec:
+            parallelism: 1
+            completions: 1
+            template:
+              spec:
+                containers:
+                - name: nvidia-cuda
+                  image: nvidia/cuda:13.0.2-base-ubuntu22.04
+                  command: [ "/bin/sh" ]
+                  args: [ "-c", "sleep 180" ]
+                  resources:
+                    requests:
+                      cpu: "1"
+                      memory: "200Mi"
+                restartPolicy: Never
+          EOF
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: kubectl_result
+      changed_when: "'created' in kubectl_result.stdout"
+
+    - name: Resolve actual pod name for {{ pod_name }}
+      ansible.builtin.shell:
+        cmd: >-
+          kubectl get pods --no-headers
+          -o custom-columns=':metadata.name'
+          --sort-by=.metadata.creationTimestamp
+          | grep "^{{ pod_name }}" | tail -1
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: resolved_pod
+      changed_when: false
+
+    - name: Set pod_name to actual pod name
+      ansible.builtin.set_fact:
+        pod_name: "{{ resolved_pod.stdout }}"
+
+    - name: Describe pod {{ pod_name }}
+      ansible.builtin.command:
+        cmd: kubectl describe pod {{ pod_name }}
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: describe_output
+      changed_when: false
+
+    - name: Print pod description
+      ansible.builtin.debug:
+        msg: "{{ describe_output.stdout_lines }}"

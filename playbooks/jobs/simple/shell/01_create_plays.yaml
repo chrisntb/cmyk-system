@@ -1,9 +1,9 @@
 ---
-- name: Job - Shell Create
+- name: Job - Simple Shell Create
   hosts: cluster_controller
   become: false
   vars:
-    pod_name: "test-shell"
+    pod_name: "test-simple-shell"
   tasks:
     - name: Apply Pod {{ pod_name }}
       ansible.builtin.shell:

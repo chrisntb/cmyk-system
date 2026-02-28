@@ -1,9 +1,9 @@
 ---
-- name: Job - Simple Shell Display
+- name: Job - Kueue GPU Display
   hosts: cluster_controller
   become: false
   vars:
-    pod_name: "test-simple-shell"
+    pod_name: "test-kueue-gpu-python"
   tasks:
     - name: Get all pods across all namespaces
       ansible.builtin.command:
@@ -16,6 +16,23 @@
     - name: Display pods
       ansible.builtin.debug:
         var: pods_output.stdout_lines
+
+    - name: Resolve actual pod name for {{ pod_name }}
+      ansible.builtin.shell:
+        cmd: >-
+          kubectl get pods --no-headers
+          -o custom-columns=':metadata.name'
+          --sort-by=.metadata.creationTimestamp
+          | grep "^{{ pod_name }}" | tail -1
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: resolved_pod
+      changed_when: false
+
+    - name: Set pod_name to actual pod name
+      ansible.builtin.set_fact:
+        pod_name: "{{ resolved_pod.stdout }}"
 
     - name: Describe pod {{ pod_name }}
       ansible.builtin.command:

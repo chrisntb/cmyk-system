@@ -1,9 +1,9 @@
 ---
-- name: Job - CPU Create
+- name: Job - Simple CPU Create
   hosts: cluster_controller
   become: false
   vars:
-    pod_name: "test-cpu-python"
+    pod_name: "test-simple-cpu-python"
   tasks:
     - name: Apply Pod {{ pod_name }}
       ansible.builtin.shell:

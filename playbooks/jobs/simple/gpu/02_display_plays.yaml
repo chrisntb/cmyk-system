@@ -1,9 +1,9 @@
 ---
-- name: Job - GPU Display
+- name: Job - Simple GPU Display
   hosts: cluster_controller
   become: false
   vars:
-    pod_name: "test-gpu-python"
+    pod_name: "test-simple-gpu-python"
   tasks:
     - name: Get all pods across all namespaces
       ansible.builtin.command:
