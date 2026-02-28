@@ -4,7 +4,7 @@
   become: false
   vars:
     # https://github.com/kubernetes-sigs/kueue/releases
-    kueue_version: "0.16.0"
+    kueue_version: "0.16.2"
     kueue_manifest_url: "https://github.com/kubernetes-sigs/kueue/releases/download/v{{ kueue_version }}/manifests.yaml"
   tasks:
     - name: Get regular user's home directory

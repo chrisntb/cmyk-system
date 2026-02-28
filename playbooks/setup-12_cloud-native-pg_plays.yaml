@@ -4,7 +4,7 @@
   become: false
   vars:
     # https://github.com/cloudnative-pg/charts/releases
-    cnpg_version: "0.27.0"
+    cnpg_version: "0.27.1"
     cnpg_chart: "cloudnative-pg/cloudnative-pg"
     cnpg_namespace: "cnpg-system"
     cnpg_name: "cloudnative-pg"

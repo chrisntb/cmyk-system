@@ -5,7 +5,7 @@
   gather_facts: true
   vars:
     # https://github.com/helm/helm/releases
-    helm_version: "4.1.0"
+    helm_version: "4.1.1"
   tasks:
     - name: Set architecture to arm64
       ansible.builtin.set_fact:
