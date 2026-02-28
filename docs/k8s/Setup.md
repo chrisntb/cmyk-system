@@ -175,6 +175,6 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kueue/gpu/02_display
 Run `KAI Scheduler` jobs:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kai-scheduler/01_create_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kai-scheduler/02_display_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kai-scheduler/gpu/01_create_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kai-scheduler/gpu/02_display_plays.yaml
 ```

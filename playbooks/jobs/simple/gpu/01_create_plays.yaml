@@ -3,7 +3,7 @@
   hosts: cluster_controller
   become: false
   vars:
-    pod_name: "test-simple-cpu-python"
+    pod_name: "test-simple-gpu-python"
   tasks:
     - name: Apply Pod {{ pod_name }}
       ansible.builtin.shell:

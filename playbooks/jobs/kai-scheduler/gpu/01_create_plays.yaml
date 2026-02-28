@@ -1,0 +1,45 @@
+---
+- name: Job - KAI Scheduler GPU Create
+  hosts: cluster_controller
+  become: false
+  vars:
+    pod_name: "test-kai-scheduler-gpu-python"
+  tasks:
+    - name: Apply Pod {{ pod_name }}
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubectl apply -f - <<'EOF'
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: {{ pod_name }}
+            labels:
+              kai.scheduler/queue: team-a  # Assigns to child queue
+          spec:
+            restartPolicy: Never
+            containers:
+            - name: test
+              image: nvidia/cuda:13.0.2-base-ubuntu22.04
+              command: ["sleep", "180"]
+              resources:
+                limits:
+                  nvidia.com/gpu: 1
+          EOF
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: kubectl_result
+      changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"
+
+    - name: Describe pod {{ pod_name }}
+      ansible.builtin.command:
+        cmd: kubectl describe pod {{ pod_name }}
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: describe_output
+      changed_when: false
+
+    - name: Print pod description
+      ansible.builtin.debug:
+        msg: "{{ describe_output.stdout_lines }}"

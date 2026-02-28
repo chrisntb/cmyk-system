@@ -42,11 +42,12 @@
 
     - name: Resolve actual pod name for {{ pod_name }}
       ansible.builtin.shell:
-        cmd: >-
-          kubectl get pods --no-headers
-          -o custom-columns=':metadata.name'
-          --sort-by=.metadata.creationTimestamp
-          | grep "^{{ pod_name }}" | tail -1
+        cmd: |
+          set -o pipefail
+          kubectl get pods --no-headers \
+            -o custom-columns=':metadata.name' \
+            --sort-by=.metadata.creationTimestamp \
+            | grep "^{{ pod_name }}" | tail -1
         executable: /bin/bash
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
