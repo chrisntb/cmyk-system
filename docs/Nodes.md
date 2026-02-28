@@ -25,44 +25,52 @@ In order to run the playbooks you will need:
 
 - Your public key added to the jump host you intend to use
 - Aliases in your `${HOME}/.ssh/config`
+- Socks5 proxy
+
+Example `SSH` config:
 
 ```shell
 Host jump
     HostName <Jump Host>
     User <Your Username on Jump Host>
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile <Your Private Key>
     IdentitiesOnly yes
 
 Host ctl
     ProxyJump jump
     HostName 10.10.228.153
     User ubuntu
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile <Your Private Key>
     IdentitiesOnly yes
 
 Host wrk-hpc-1
     ProxyJump jump
     HostName 10.10.228.148
     User ubuntu
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile <Your Private Key>
     IdentitiesOnly yes
 
 Host wrk-hpc-2
     ProxyJump jump
     HostName 10.10.228.154
     User ubuntu
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile <Your Private Key>
     IdentitiesOnly yes
 
 #Host wrk-mgt-1
 #    ProxyJump jump
 #    HostName ###.###.###.###
 #    User ubuntu
-#    IdentityFile ~/.ssh/id_ed25519
+#    IdentityFile <Your Private Key>
 #    IdentitiesOnly yes
 ```
 
-For example, see [../etc/ssh_config_proxy.inc](../etc/ssh_config_proxy.inc).
+Example Socks5 proxy:
+
+```shell
+# -f background, -C compression, -q Quiet, -N No remote commands, -D local dynamic port forwarding
+ssh -i <Your Private Key> -f -C -q -N -D 8123 <Your Username on Jump Host>@<Jump Host>
+```
 
 ## Multipass Virtual Machines Nodes
 
@@ -115,28 +123,30 @@ In order to run the playbooks you will need:
   - See instructions above
 - Aliases in your `${HOME}/.ssh/config`
 
+Example `SSH` config:
+
 ```shell
 Host ctl
     HostName 192.168.64.25
     User ubuntu
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile <Your Private Key>
     IdentitiesOnly yes
 
 Host wrk-hpc-1
     HostName 192.168.64.26
     User ubuntu
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile <Your Private Key>
     IdentitiesOnly yes
 
 Host wrk-hpc-2
     HostName 192.168.64.27
     User ubuntu
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile <Your Private Key>
     IdentitiesOnly yes
 
 #Host wrk-mgt-1
 #    HostName ###.###.###.###
 #    User ubuntu
-#    IdentityFile ~/.ssh/id_ed25519
+#    IdentityFile <Your Private Key>
 #    IdentitiesOnly yes
 ```
