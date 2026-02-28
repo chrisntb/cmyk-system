@@ -2,8 +2,10 @@
 - name: Job - CPU Create
   hosts: cluster_controller
   become: false
+  vars:
+    pod_name: "test-cpu-python"
   tasks:
-    - name: Apply test-cpu-python Pod
+    - name: Apply Pod {{ pod_name }}
       ansible.builtin.shell:
         cmd: |
           set -o pipefail
@@ -11,7 +13,7 @@
           apiVersion: v1
           kind: Pod
           metadata:
-            name: test-cpu-python
+            name: {{ pod_name }}
           spec:
             restartPolicy: Never
             containers:
@@ -80,9 +82,9 @@
       register: kubectl_result
       changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"
 
-    - name: Describe test-cpu-python pod
+    - name: Describe pod {{ pod_name }}
       ansible.builtin.command:
-        cmd: kubectl describe pod test-cpu-python
+        cmd: kubectl describe pod {{ pod_name }}
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
       register: describe_output
