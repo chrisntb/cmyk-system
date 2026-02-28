@@ -23,11 +23,43 @@ We received these errors when initially testing with very small virtual machines
 
 In order to run the playbooks you will need:
 
-- Your public key added to the proxy you intend to use
+- Your public key added to the jump host you intend to use
 - Aliases in your `${HOME}/.ssh/config`
 
-```text
-Include ~/.ssh/ssh_config_proxy.inc
+```shell
+Host jump
+    HostName <Jump Host>
+    User <Your Username on Jump Host>
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+Host ctl
+    ProxyJump jump
+    HostName 10.10.228.153
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+Host wrk-hpc-1
+    ProxyJump jump
+    HostName 10.10.228.148
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+Host wrk-hpc-2
+    ProxyJump jump
+    HostName 10.10.228.154
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+#Host wrk-mgt-1
+#    ProxyJump jump
+#    HostName ###.###.###.###
+#    User ubuntu
+#    IdentityFile ~/.ssh/id_ed25519
+#    IdentitiesOnly yes
 ```
 
 For example, see [../etc/ssh_config_proxy.inc](../etc/ssh_config_proxy.inc).
@@ -83,8 +115,28 @@ In order to run the playbooks you will need:
   - See instructions above
 - Aliases in your `${HOME}/.ssh/config`
 
-```text
-Include ~/.ssh/ssh_config.inc
-```
+```shell
+Host ctl
+    HostName 192.168.64.25
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
 
-For example, see [../etc/ssh_config.inc](../etc/ssh_config.inc).
+Host wrk-hpc-1
+    HostName 192.168.64.26
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+Host wrk-hpc-2
+    HostName 192.168.64.27
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+#Host wrk-mgt-1
+#    HostName ###.###.###.###
+#    User ubuntu
+#    IdentityFile ~/.ssh/id_ed25519
+#    IdentitiesOnly yes
+```
