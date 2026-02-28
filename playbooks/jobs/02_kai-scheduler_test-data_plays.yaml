@@ -1,0 +1,98 @@
+---
+- name: Job - Kai Scheduler Test Data
+  hosts: cluster_controller
+  become: false
+  vars:
+    parent_queue_name: ""
+    parent_queue_gpu_quota: ""
+    parent_queue_gpu_limit: ""
+    parent_queue_cpu_quota: ""
+    parent_queue_cpu_limit: ""
+    child_queue_name: ""
+    child_queue_gpu_quota: ""
+    child_queue_gpu_limit: ""
+    child_queue_cpu_quota: ""
+    child_queue_cpu_limit: ""
+  tasks:
+    - name: Assert required variables are set
+      ansible.builtin.assert:
+        that:
+          - parent_queue_name | length > 0
+          - parent_queue_gpu_quota | length > 0
+          - parent_queue_gpu_limit | length > 0
+          - parent_queue_cpu_quota | length > 0
+          - parent_queue_cpu_limit | length > 0
+          - child_queue_name | length > 0
+          - child_queue_gpu_quota | length > 0
+          - child_queue_gpu_limit | length > 0
+          - child_queue_cpu_quota | length > 0
+          - child_queue_cpu_limit | length > 0
+        fail_msg: >-
+          Required variables must be passed in:
+          parent_queue_name,
+          parent_queue_gpu_quota, parent_queue_gpu_limit,
+          parent_queue_cpu_quota, parent_queue_cpu_limit,
+          child_queue_name,
+          child_queue_gpu_quota, child_queue_gpu_limit,
+          child_queue_cpu_quota, child_queue_cpu_limit
+
+    - name: Apply parent Queue {{ parent_queue_name }}
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubectl apply -f - <<'EOF'
+          apiVersion: scheduling.run.ai/v2
+          kind: Queue
+          metadata:
+            name: {{ parent_queue_name }}
+          spec:
+            resources:
+              gpu:
+                quota: {{ parent_queue_gpu_quota }}
+                limit: {{ parent_queue_gpu_limit }}
+              cpu:
+                quota: {{ parent_queue_cpu_quota }}
+                limit: {{ parent_queue_cpu_limit }}
+          EOF
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: kubectl_result
+      changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"
+
+    - name: Apply child Queue {{ child_queue_name }}
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubectl apply -f - <<'EOF'
+          apiVersion: scheduling.run.ai/v2
+          kind: Queue
+          metadata:
+            name: {{ child_queue_name }}
+          spec:
+            parentQueue: {{ parent_queue_name }}
+            resources:
+              gpu:
+                quota: {{ child_queue_gpu_quota }}
+                limit: {{ child_queue_gpu_limit }}
+              cpu:
+                quota: {{ child_queue_cpu_quota }}
+                limit: {{ child_queue_cpu_limit }}
+          EOF
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: kubectl_result
+      changed_when: "'configured' in kubectl_result.stdout or 'created' in kubectl_result.stdout"
+
+    - name: Get Queues
+      ansible.builtin.command:
+        cmd: kubectl get queues --all-namespaces -o wide
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: queues_output
+      changed_when: false
+
+    - name: Display Queues
+      ansible.builtin.debug:
+        var: queues_output.stdout_lines
