@@ -31,7 +31,7 @@
     - name: Disable swap permanently
       ansible.builtin.replace:
         path: /etc/fstab
-        regexp: '([[:space:]]swap[[:space:]])'
+        regexp: '^([^#].*\s+swap\s+)'
         replace: '#\1'
 
     - name: Load br_netfilter module
