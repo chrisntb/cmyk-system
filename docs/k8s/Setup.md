@@ -143,21 +143,21 @@ Create test data:
 ```shell
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/02_kueue_test-data_plays.yaml \
   -e resource_flavor_name="default-flavor" \
-  -e cluster_queue_name="adhoc-cluster-queue" \
+  -e cluster_queue_name="research-grp" \
   -e cluster_queue_cpu_quota=9 \
   -e cluster_queue_memory_quota="36Gi" \
   -e cluster_queue_pods_quota=5 \
-  -e local_queue_name="adhoc-local-queue"
+  -e local_queue_name="training"
 
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/02_kai-scheduler_test-data_plays.yaml \
-  -e parent_queue_name="department" \
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/03_kai-scheduler_test-data_plays.yaml \
+  -e parent_queue_name="research-grp" \
   -e parent_queue_gpu_quota=-1 \
   -e parent_queue_gpu_limit=-1 \
   -e parent_queue_cpu_quota=-1 \
   -e parent_queue_cpu_limit=-1 \
   -e parent_queue_memory_quota=-1 \
   -e parent_queue_memory_limit=-1 \
-  -e child_queue_name="team" \
+  -e child_queue_name="training" \
   -e child_queue_gpu_quota=-1 \
   -e child_queue_gpu_limit=-1 \
   -e child_queue_cpu_quota=-1 \
