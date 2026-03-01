@@ -1,4 +1,4 @@
-# Setup
+# K8s Cluster - Setup
 
 First create an ad hoc cluster where you can schedule CPU work.
 Next add support to the cluster for scheduling work on Nvidia GPUs.

@@ -1,4 +1,4 @@
-# K8s - Architecture
+# K8s Cluster - Architecture
 
 K8s is a system for automating the deployment, scaling, and management of containerized applications.
 Described here are the building blocks that make K8s work and how to use them to create an ad hoc cluster.
