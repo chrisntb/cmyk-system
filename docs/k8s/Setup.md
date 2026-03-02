@@ -215,7 +215,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kai-scheduler/gpu/02
 ## Monitor Cluster
 
 <details close>
-<summary>Ambiguous containers</summary>
+<summary>Ambiguous container names</summary>
 
 <ul>
   <li>Kueue</li>
