@@ -143,6 +143,20 @@ kubectl rollout restart statefulset prometheus-kube-prometheus-stack-prometheus 
 
 ```shell
 kubectl get nodes -o wide
+
+sudo crictl stats
+CONTAINER           NAME                      CPU %               MEM                 DISK                INODES              SWAP
+0d29690fa3109       kube-proxy                0.00                17.63MB             174B                27                  0B
+235df81326d43       coredns                   0.19                16.92MB             12B                 14                  0B
+29343861404f9       kube-scheduler            1.13                34.88MB             12B                 10                  0B
+5cefd6858e487       coredns                   0.22                17.15MB             12B                 14                  0B
+65429109ac27e       kube-controller-manager   1.54                74.11MB             12B                 23                  0B
+837256d3487a6       etcd                      3.70                75.99MB             12B                 14                  0B
+87f3418681bf5       kube-apiserver            5.79                580.5MB             12B                 17                  0B
+97bbf06d73a3e       master                    3.09                20.87MB             12B                 16                  0B
+afea53e8d48c4       kube-flannel              1.55                18.08MB             162B                19                  0B
+f001e1167ed14       gpu-operator              0.23                30.34MB             12B                 15                  0B
+fb07350dbf5c6       worker                    0.00                20.34MB             12B                 25                  0B
 ```
 
 ## Queues
