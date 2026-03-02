@@ -1,0 +1,14 @@
+---
+- name: Check - K8s Nodes Container Stats
+  hosts: cluster
+  become: true
+  tasks:
+    - name: Get container stats
+      ansible.builtin.command:
+        cmd: crictl stats
+      register: crictl_stats_output
+      changed_when: false
+
+    - name: Display container stats
+      ansible.builtin.debug:
+        var: crictl_stats_output.stdout_lines

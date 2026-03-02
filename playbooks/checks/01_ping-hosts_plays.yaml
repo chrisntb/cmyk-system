@@ -8,3 +8,13 @@
     - name: Print message
       ansible.builtin.debug:
         msg: Hello world!
+
+    - name: Get stat info for root filesystem
+      ansible.builtin.stat:
+        path: /
+      register: root_stat
+
+    - name: Show operating system install timestamp (filesystem ctime)
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%Y-%m-%d %H:%M:%S' | strftime(root_stat.stat.ctime | int) }}

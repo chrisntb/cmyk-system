@@ -60,10 +60,12 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/01_ping-hosts_play
 If the nodes are in a private network, set the proxy configuration on all nodes:
 
 ```shell
+echo
 echo "HTTP_PROXY=${HTTP_PROXY}"
 echo "POD_NETWORK_CIDR=${POD_NETWORK_CIDR}"
 echo "SERVICE_CIDR=${SERVICE_CIDR}"
 echo "NODE_IPS=${NODE_IPS}"
+echo
 
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/01_proxies_plays.yaml \
   -e http_proxy=${HTTP_PROXY} \
@@ -85,9 +87,25 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/05_initialize-k8s_p
 
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/06_cni_flannel_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/07_join-workers-to-k8s_plays.yaml
+```
 
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/08_helm_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/09_helm-repositories_plays.yaml
+Fetch the cluster's `.kube/config`:
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/08_fetch-kube-config_plays.yaml
+```
+
+Add `Helm` to the cluster:
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/09_helm_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/10_helm-repositories_plays.yaml
+```
+
+### Create Cluster - Check Resource Usage
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/04_k8s_nodes_resource-usage_plays.yaml
 ```
 
 ### Create Cluster - Kueue
@@ -95,7 +113,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/09_helm-repositorie
 Add `kueue` support for advanced job admission and placement logic integrating with the native scheduler:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/10_kueue_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/11_kueue_plays.yaml
 ```
 
 ### Create Cluster - KAI Scheduler
@@ -103,7 +121,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/10_kueue_plays.yaml
 Add `KAI Scheduler` support for advanced job admission and placement logic, replacing the native scheduler for certain workloads:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/11_kai-scheduler_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_kai-scheduler_plays.yaml
 ```
 
 ### Create Cluster - Nvidia GPU Operator
@@ -113,7 +131,7 @@ Add `Nvidia GPU Operator` to discover and configure GPU nodes.
 If the nodes are in a private network, set the job proxy configuration:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_nvidia-gpu-operator_plays.yaml \
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/13_nvidia-gpu-operator_plays.yaml \
   -e use_proxy=yes \
   -e http_proxy=${HTTP_PROXY} \
   -e pod_network_cidr=${POD_NETWORK_CIDR} \
@@ -124,7 +142,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_nvidia-gpu-opera
 OR if the nodes are NOT in a private network:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_nvidia-gpu-operator_plays.yaml \
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/13_nvidia-gpu-operator_plays.yaml \
   -e use_proxy=no
 ```
 
@@ -134,6 +152,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_nvidia-gpu-opera
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/01_ping-hosts_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/02_k8s_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/03_k8s-nodes_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/04_k8s_nodes_resource-usage_plays.yaml
 ```
 
 Check access to the cluster:

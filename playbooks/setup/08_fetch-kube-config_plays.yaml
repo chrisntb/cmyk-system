@@ -1,0 +1,45 @@
+---
+- name: Setup - Fetch Kube Config
+  hosts: cluster_controller
+  become: false
+  vars:
+    local_kube_dir: "{{ lookup('env', 'HOME') }}/.kube"
+    local_kube_config: "{{ local_kube_dir }}/config"
+  tasks:
+    - name: Ensure local .kube directory exists
+      ansible.builtin.file:
+        path: "{{ local_kube_dir }}"
+        state: directory
+        mode: '0700'
+      delegate_to: localhost
+
+    - name: Check if local .kube/config exists
+      ansible.builtin.stat:
+        path: "{{ local_kube_config }}"
+      delegate_to: localhost
+      register: local_config_stat
+
+    - name: Get remote user's home directory
+      ansible.builtin.command:
+        cmd: echo $HOME
+      register: remote_home
+      changed_when: false
+
+    - name: Back up existing local .kube/config with timestamp
+      ansible.builtin.shell:
+        cmd: cp "{{ local_kube_config }}" "{{ local_kube_config }}.$(date +%Y%m%dT%H%M%S)"
+      delegate_to: localhost
+      when: local_config_stat.stat.exists
+      changed_when: true
+
+    - name: Fetch .kube/config from controller node
+      ansible.builtin.fetch:
+        src: "{{ remote_home.stdout }}/.kube/config"
+        dest: "{{ local_kube_config }}"
+        flat: true
+
+    - name: Set local .kube/config permissions
+      ansible.builtin.file:
+        path: "{{ local_kube_config }}"
+        mode: '0600'
+      delegate_to: localhost
