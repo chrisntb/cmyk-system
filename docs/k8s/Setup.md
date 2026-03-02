@@ -43,16 +43,28 @@ Decide on the IPs for the cluster:
 # If the nodes are in a private network make the network's proxy available to the nodes and K8s
 HTTP_PROXY="http://proxy.example.com:####"
 
-POD_NETWORK_CIDR="10.244.0.0/16"  # K8s default
-SERVICE_CIDR="10.96.0.0/12"       # K8s default
+  # K8s defaults
+POD_NETWORK_CIDR="10.244.0.0/16"
+SERVICE_CIDR="10.96.0.0/12"
 
  # Use your own node IPs
 NODE_IPS="###.###.###,..."
 ```
 
+Check you can access all nodes:
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/01_ping-hosts_plays.yaml
+```
+
 If the nodes are in a private network, set the proxy configuration on all nodes:
 
 ```shell
+echo "HTTP_PROXY=${HTTP_PROXY}"
+echo "POD_NETWORK_CIDR=${POD_NETWORK_CIDR}"
+echo "SERVICE_CIDR=${SERVICE_CIDR}"
+echo "NODE_IPS=${NODE_IPS}"
+
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/01_proxies_plays.yaml \
   -e http_proxy=${HTTP_PROXY} \
   -e pod_network_cidr=${POD_NETWORK_CIDR} \
@@ -96,19 +108,24 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/11_kai-scheduler_pl
 
 ### Create Cluster - Nvidia GPU Operator
 
-Add `Nvidia GPU Operator` to discover and configure GPU nodes:
+Add `Nvidia GPU Operator` to discover and configure GPU nodes.
+
+If the nodes are in a private network, set the job proxy configuration:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_nvidia-gpu-operator_plays.yaml \
-  -e use_proxy=no
-
-# OR if the nodes are in a private network, set the job proxy configuration
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_nvidia-gpu-operator_plays.yaml \
   -e use_proxy=yes \
   -e http_proxy=${HTTP_PROXY} \
   -e pod_network_cidr=${POD_NETWORK_CIDR} \
   -e service_cidr=${SERVICE_CIDR} \
   -e node_ips=${NODE_IPS}
+```
+
+OR if the nodes are NOT in a private network:
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_nvidia-gpu-operator_plays.yaml \
+  -e use_proxy=no
 ```
 
 ## Check Cluster
