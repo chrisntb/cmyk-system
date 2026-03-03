@@ -158,6 +158,9 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/04_k8s_nodes_resou
 Check access to the cluster:
 
 ```shell
+cat ~/.kube/config | grep server:
+#    server: https://10.10.228.153:6443
+
 curl -k https://<K8s Cluster Controller IP>:6443/version
 ```
 
