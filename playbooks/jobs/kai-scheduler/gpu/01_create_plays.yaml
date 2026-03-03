@@ -4,6 +4,7 @@
   become: false
   vars:
     pod_name: "test-kai-scheduler-gpu-python"
+    queue_name: "training"
   tasks:
     - name: Apply Pod {{ pod_name }}
       ansible.builtin.shell:
@@ -15,13 +16,111 @@
           metadata:
             name: {{ pod_name }}
             labels:
-              kai.scheduler/queue: team-a  # Assigns to child queue
+              kai.scheduler/queue: {{ queue_name }}
           spec:
             restartPolicy: Never
             containers:
-            - name: test
+            - name: nvidia-cuda
               image: nvidia/cuda:13.0.2-base-ubuntu22.04
-              command: ["sleep", "180"]
+              envFrom:
+                - configMapRef:
+                    name: test-environment
+              env:
+                  # So we can see incremental progress
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                  # Using older version of Pytorch with the latest Numpy and Python versions it supports
+                  # -> Required for cuda capability 6.0 which is required for P100 GPUs
+                - name: PYTORCH_VERSION
+                  value: "1.13.1"
+                - name: PYTHON_VERSION
+                  value: "3.11"
+                - name: NUMPY_VERSION
+                  value: "1.26.4"
+              command: ["/bin/sh", "-c"]
+              args:
+              - |
+                set -e
+                echo
+                echo "-------- Printing environment --------"
+                env
+                echo
+                echo "PYTHONUNBUFFERED=${PYTHONUNBUFFERED}"
+                echo "PYTORCH_VERSION=${PYTORCH_VERSION}"
+                echo "PYTHON_VERSION=${PYTHON_VERSION}"
+                echo "NUMPY_VERSION=${NUMPY_VERSION}"
+                echo "-"
+                echo
+                echo
+                echo "-------- Installing 'uv' --------"
+                apt-get -y clean && apt-get -y update && apt-get -y install curl
+                curl -LsSf https://astral.sh/uv/install.sh | sh
+                . /root/.local/bin/env
+                uv python install ${PYTHON_VERSION}
+                echo "-"
+                echo
+                echo
+                echo "-------- Initializing project --------"
+                uv init --python ${PYTHON_VERSION} project
+                cd project
+                cat <<'EOFFF' > main.py
+                import time
+                import torch
+                def allocate(use_gpu_index, iterations=20, min_size=14336, max_size=18432, delay=0.1):
+                    device = torch.device(f"cuda:{use_gpu_index}")
+                    device_name = torch.cuda.get_device_name(use_gpu_index)
+                    print(f"GPU {use_gpu_index} testing: {device_name}")
+                    try:
+                        for i in range(iterations):
+                            # Random size multiple of 8 between min_size and max_size
+                            size = torch.randint(min_size // 8, max_size // 8 + 1, (1,)).item() * 8
+                            # Using half precision to force use of tensor cores
+                            x = torch.randn(size, size, device=device, dtype=torch.float16)
+                            # Matrix multiplication
+                            y = torch.mm(x, x.t())
+                            # Non-linear activation function
+                            z = torch.tanh(y)
+                            # Summation along dimension 1
+                            w = torch.sum(z, dim=1)
+                            torch.cuda.synchronize()
+                            print(f"Iteration {i}: GPU {use_gpu_index} tensor operations: SUCCESS")
+                            print(f"Iteration {i}: GPU {use_gpu_index} tensor shape: {y.shape}")
+                            if delay > 0:
+                                time.sleep(delay)  # Optional delay between iterations to reduce heat or load
+                    except Exception as e:
+                        print(f"Iteration {i}: GPU {use_gpu_index} FAILED: {e}")
+                def main():
+                    print("Hello from a Python GPU job!")
+                    print("-------- Start --------")
+                    use_gpu_index = 0
+                    allocate(use_gpu_index)
+                    print("-------- Finish --------")
+                if __name__ == "__main__":
+                    main()
+                EOFFF
+                echo "-"
+                echo
+                echo
+                echo "-------- Creating project virtual environment --------"
+                uv venv --clear
+                echo "-"
+                echo
+                echo
+                echo "-------- Activating project virtual environment --------"
+                . .venv/bin/activate
+                echo "-"
+                echo
+                echo
+                echo "-------- Installing dependencies --------"
+                uv add "torch==${PYTORCH_VERSION}"
+                uv add "numpy==${NUMPY_VERSION}"
+                echo "-"
+                echo
+                echo
+                echo "-------- Running GPU test --------"
+                uv run main.py
+                echo "-"
+                echo
               resources:
                 limits:
                   nvidia.com/gpu: 1
