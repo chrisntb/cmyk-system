@@ -89,17 +89,17 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/06_cni_flannel_play
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/07_join-workers-to-k8s_plays.yaml
 ```
 
-Fetch the cluster's `.kube/config`:
-
-```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/08_fetch-kube-config_plays.yaml
-```
-
 Add `Helm` to the cluster:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/09_helm_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/10_helm-repositories_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/08_helm_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/09_helm-repositories_plays.yaml
+```
+
+Fetch the cluster's `.kube/config`:
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/10_fetch-kube-config_plays.yaml
 ```
 
 ### Create Cluster - Check Resource Usage
@@ -183,6 +183,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/02_kueue_test-data_p
   -e cluster_queue_cpu_quota=9 \
   -e cluster_queue_memory_quota="36Gi" \
   -e cluster_queue_pods_quota=5 \
+  -e cluster_queue_gpu_quota=2 \
   -e local_queue_name="training"
 
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/03_kai-scheduler_test-data_plays.yaml \
