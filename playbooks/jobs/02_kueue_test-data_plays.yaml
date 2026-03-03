@@ -8,6 +8,7 @@
     cluster_queue_cpu_quota: ""
     cluster_queue_memory_quota: ""
     cluster_queue_pods_quota: ""
+    cluster_queue_gpu_quota: ""
     local_queue_name: ""
   tasks:
     - name: Assert required variables are set
@@ -18,11 +19,13 @@
           - cluster_queue_cpu_quota | length > 0
           - cluster_queue_memory_quota | length > 0
           - cluster_queue_pods_quota | length > 0
+          - cluster_queue_gpu_quota | length > 0
           - local_queue_name | length > 0
         fail_msg: >-
           Required variables must be passed in: resource_flavor_name,
           cluster_queue_name, cluster_queue_cpu_quota,
-          cluster_queue_memory_quota, cluster_queue_pods_quota, local_queue_name
+          cluster_queue_memory_quota, cluster_queue_pods_quota,
+          cluster_queue_gpu_quota, local_queue_name
 
     - name: Apply ResourceFlavor {{ resource_flavor_name }}
       ansible.builtin.shell:
@@ -52,7 +55,7 @@
           spec:
             namespaceSelector: {} # match all
             resourceGroups:
-            - coveredResources: ["cpu", "memory", "pods"]
+            - coveredResources: ["cpu", "memory", "pods", "nvidia.com/gpu"]
               flavors:
               - name: {{ resource_flavor_name }}
                 resources:
@@ -62,6 +65,8 @@
                   nominalQuota: {{ cluster_queue_memory_quota }}
                 - name: pods
                   nominalQuota: {{ cluster_queue_pods_quota }}
+                - name: nvidia.com/gpu
+                  nominalQuota: {{ cluster_queue_gpu_quota }}
           EOF
         executable: /bin/bash
       environment:
