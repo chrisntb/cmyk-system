@@ -5,10 +5,10 @@
   tasks:
     - name: Get container stats
       ansible.builtin.command:
-        cmd: crictl stats
+        cmd: bash -c "crictl stats | sed 's/\\x1b\\[[0-9;]*[A-Za-z]//g'"
       register: crictl_stats_output
       changed_when: false
 
     - name: Display container stats
       ansible.builtin.debug:
-        var: crictl_stats_output.stdout_lines
+        msg: "{{ crictl_stats_output.stdout_lines }}"

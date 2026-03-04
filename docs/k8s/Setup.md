@@ -43,7 +43,7 @@ Decide on the IPs for the cluster:
 # If the nodes are in a private network make the network's proxy available to the nodes and K8s
 HTTP_PROXY="http://proxy.example.com:####"
 
-  # K8s defaults
+# K8s defaults
 POD_NETWORK_CIDR="10.244.0.0/16"
 SERVICE_CIDR="10.96.0.0/12"
 
