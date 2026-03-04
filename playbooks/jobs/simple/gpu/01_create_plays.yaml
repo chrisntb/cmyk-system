@@ -63,7 +63,7 @@
                 cat <<'EOFFF' > main.py
                 import time
                 import torch
-                def allocate(use_gpu_index, iterations=20, min_size=14336, max_size=18432, delay=0.1):
+                def allocate(use_gpu_index, iterations=10, min_size=14336, max_size=18432, delay=0.1):
                     device = torch.device(f"cuda:{use_gpu_index}")
                     device_name = torch.cuda.get_device_name(use_gpu_index)
                     print(f"GPU {use_gpu_index} testing: {device_name}")
