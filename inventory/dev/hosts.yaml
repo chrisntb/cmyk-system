@@ -1,13 +1,12 @@
 ---
 cluster_workers:
   hosts:
-    cluster_hpc_worker_1:
-      ansible_host: wrk-hpc-1
-    cluster_hpc_worker_2:
-      ansible_host: wrk-hpc-2
-    # At first support a client interface to the cluster - no mgt services required
-    # cluster_mgt_worker_1:
-    #   ansible_host: wrk-mgt-1
+    cluster_hpc_mgt_1:
+      ansible_host: hpc-mgt-1
+    cluster_hpc_wrk_1:
+      ansible_host: hpc-wrk-1
+    cluster_hpc_wrk_2:
+      ansible_host: hpc-wrk-2
 
 cluster:
   hosts:
