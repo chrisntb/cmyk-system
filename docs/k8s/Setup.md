@@ -55,6 +55,8 @@ Check you can access all nodes:
 
 ```shell
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/01_ping-hosts_plays.yaml
+
+ansible -i inventory/dev/hosts.yaml cluster -m command -a 'ip -br a'
 ```
 
 If the nodes are in a private network, set the proxy configuration on all nodes:

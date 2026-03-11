@@ -38,31 +38,39 @@ Host jump
 
 Host ctl
     ProxyJump jump
+    HostName 10.10.228.151
+    User ubuntu
+    IdentityFile <Your Private Key>
+    IdentitiesOnly yes
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+
+Host hpc-mgt-1
+    ProxyJump jump
+    HostName 10.10.228.152
+    User ubuntu
+    IdentityFile <Your Private Key>
+    IdentitiesOnly yes
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+
+Host hpc-wrk-1
+    ProxyJump jump
     HostName 10.10.228.153
     User ubuntu
     IdentityFile <Your Private Key>
     IdentitiesOnly yes
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
 
-Host wrk-hpc-1
+Host hpc-wrk-2
     ProxyJump jump
-    HostName 10.10.228.148
+    HostName 10.10.228.145
     User ubuntu
     IdentityFile <Your Private Key>
     IdentitiesOnly yes
-
-Host wrk-hpc-2
-    ProxyJump jump
-    HostName 10.10.228.154
-    User ubuntu
-    IdentityFile <Your Private Key>
-    IdentitiesOnly yes
-
-#Host wrk-mgt-1
-#    ProxyJump jump
-#    HostName ###.###.###.###
-#    User ubuntu
-#    IdentityFile <Your Private Key>
-#    IdentitiesOnly yes
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
 ```
 
 Example Socks5 proxy:
