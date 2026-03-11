@@ -4,7 +4,7 @@
   become: false
   vars:
     # https://github.com/NVIDIA/KAI-Scheduler/releases
-    kai_scheduler_version: "v0.12.15"
+    kai_scheduler_version: "v0.13.01"
     kai_scheduler_chart: "oci://ghcr.io/nvidia/kai-scheduler/kai-scheduler"
     kai_scheduler_namespace: "kai-scheduler"
     kai_scheduler_name: "kai-scheduler"
