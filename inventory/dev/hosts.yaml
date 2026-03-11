@@ -1,12 +1,20 @@
 ---
-cluster_workers:
+cluster_compute_workers:
   hosts:
-    cluster_hpc_mgt_1:
-      ansible_host: hpc-mgt-1
-    cluster_hpc_wrk_1:
-      ansible_host: hpc-wrk-1
-    cluster_hpc_wrk_2:
-      ansible_host: hpc-wrk-2
+    cluster_hpc_wrk_compute_1:
+      ansible_host: hpc-wrk-compute-1
+    cluster_hpc_wrk_compute_2:
+      ansible_host: hpc-wrk-compute-2
+
+cluster_system_workers:
+  hosts:
+    cluster_hpc_wrk_system_1:
+      ansible_host: hpc-wrk-system-1
+
+cluster_workers:
+  children:
+    cluster_compute_workers:
+    cluster_system_workers:
 
 cluster:
   hosts:
