@@ -23,6 +23,12 @@
             completions: 1
             template:
               spec:
+                nodeSelector:
+                  cmyk.io/node-type: compute
+                tolerations:
+                  - key: cmyk.io/compute-only
+                    value: "true"
+                    effect: NoSchedule
                 containers:
                 - name: nvidia-cuda
                   image: nvidia/cuda:13.0.2-base-ubuntu22.04

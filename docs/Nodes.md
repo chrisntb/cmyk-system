@@ -38,14 +38,14 @@ Host jump
 
 Host ctl
     ProxyJump jump
-    HostName 10.10.228.151
+    HostName 10.10.228.153
     User ubuntu
     IdentityFile <Your Private Key>
     IdentitiesOnly yes
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
 
-Host hpc-mgt-1
+Host hpc-wrk-system-1
     ProxyJump jump
     HostName 10.10.228.152
     User ubuntu
@@ -54,16 +54,16 @@ Host hpc-mgt-1
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
 
-Host hpc-wrk-1
+Host hpc-wrk-compute-1
     ProxyJump jump
-    HostName 10.10.228.153
+    HostName 10.10.228.151
     User ubuntu
     IdentityFile <Your Private Key>
     IdentitiesOnly yes
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
 
-Host hpc-wrk-2
+Host hpc-wrk-compute-2
     ProxyJump jump
     HostName 10.10.228.145
     User ubuntu

@@ -81,21 +81,90 @@
     - name: Install Nvidia GPU Operator using Helm
       ansible.builtin.command:
         cmd: >
-          helm install {{ gpu_operator_name }} {{ gpu_operator_chart }}
+          helm upgrade --install {{ gpu_operator_name }} {{ gpu_operator_chart }}
           --version {{ gpu_operator_version }}
           --namespace {{ gpu_operator_namespace }}
           --create-namespace
           --kubeconfig {{ user_home.stdout }}/.kube/config
+          --set "daemonsets.tolerations[0].key=cmyk.io/compute-only"
+          --set-string "daemonsets.tolerations[0].value=true"
+          --set "daemonsets.tolerations[0].effect=NoSchedule"
+          --set "node-feature-discovery.worker.tolerations[0].key=cmyk.io/compute-only"
+          --set-string "node-feature-discovery.worker.tolerations[0].value=true"
+          --set "node-feature-discovery.worker.tolerations[0].effect=NoSchedule"
           {{ gpu_operator_values_arg }}
       register: helm_install_result
       changed_when: "'STATUS: deployed' in helm_install_result.stdout"
-      failed_when:
-        - helm_install_result.rc != 0
-        - "'already exists' not in helm_install_result.stderr"
 
     - name: Display installation result
       ansible.builtin.debug:
         var: helm_install_result.stdout_lines
+
+    - name: Apply ClusterPolicy with compute node tolerations
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubectl apply --server-side --force-conflicts -f - <<'EOF'
+          apiVersion: nvidia.com/v1
+          kind: ClusterPolicy
+          metadata:
+            name: gpu-cluster-policy
+          spec:
+            daemonsets:
+              tolerations:
+                - key: cmyk.io/compute-only
+                  value: "true"
+                  effect: NoSchedule
+            operator:
+              defaultRuntime: crio
+            driver:
+              enabled: true
+            toolkit:
+              enabled: true
+            devicePlugin:
+              enabled: true
+            dcgm:
+              enabled: true
+            dcgmExporter:
+              enabled: true
+            gfd:
+              enabled: true
+            nodeStatusExporter:
+              enabled: true
+          EOF
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: clusterpolicy_result
+      changed_when: "'configured' in clusterpolicy_result.stdout or 'created' in clusterpolicy_result.stdout"
+
+    - name: Wait for NFD worker to be ready on all nodes
+      ansible.builtin.command:
+        cmd: kubectl rollout status daemonset/nvidia-gpu-operator-node-feature-discovery-worker -n {{ gpu_operator_namespace }} --timeout=120s
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: nfd_rollout
+      changed_when: false
+
+    - name: Display NFD worker rollout status
+      ansible.builtin.debug:
+        var: nfd_rollout.stdout_lines
+
+    - name: Get ClusterPolicy state
+      ansible.builtin.command:
+        cmd: kubectl get clusterpolicy gpu-cluster-policy -o jsonpath='{.status.state}'
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: clusterpolicy_state
+      changed_when: false
+
+    - name: Display ClusterPolicy state
+      ansible.builtin.debug:
+        msg: >-
+          ClusterPolicy state: {{ clusterpolicy_state.stdout }}.
+          GPU driver installation can take 10-20 minutes on first run.
+          Monitor with: kubectl get pods -n gpu-operator -o wide
+          Verify GPUs with: ansible-playbook checks/05_k8s-nodes_gpus_plays.yaml
 
     - name: Check Nvidia GPU Operator deployment status
       ansible.builtin.command:

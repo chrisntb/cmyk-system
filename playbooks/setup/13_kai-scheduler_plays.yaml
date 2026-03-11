@@ -3,9 +3,9 @@
   hosts: cluster_controller
   become: false
   vars:
-    # https://github.com/NVIDIA/KAI-Scheduler/releases
-    kai_scheduler_version: "v0.13.01"
-    kai_scheduler_chart: "oci://ghcr.io/nvidia/kai-scheduler/kai-scheduler"
+    # https://github.com/kai-scheduler/KAI-Scheduler/releases
+    kai_scheduler_version: "v0.13.1"
+    kai_scheduler_chart: "oci://ghcr.io/kai-scheduler/kai-scheduler/kai-scheduler"
     kai_scheduler_namespace: "kai-scheduler"
     kai_scheduler_name: "kai-scheduler"
   tasks:
@@ -37,7 +37,7 @@
     - name: Install KAI Scheduler using Helm
       ansible.builtin.command:
         cmd: >
-          helm install {{ kai_scheduler_name }} {{ kai_scheduler_chart }}
+          helm upgrade --install {{ kai_scheduler_name }} {{ kai_scheduler_chart }}
           --version {{ kai_scheduler_version }}
           --namespace {{ kai_scheduler_namespace }}
           --create-namespace
@@ -45,9 +45,6 @@
         KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
       register: helm_install_result
       changed_when: "'STATUS: deployed' in helm_install_result.stdout"
-      failed_when:
-        - helm_install_result.rc != 0
-        - "'already exists' not in helm_install_result.stderr"
 
     - name: Display installation result
       ansible.builtin.debug:

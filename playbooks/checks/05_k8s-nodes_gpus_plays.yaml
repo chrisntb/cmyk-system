@@ -1,0 +1,18 @@
+---
+- name: Check - K8s Nodes GPU Allocatable
+  hosts: cluster_controller
+  become: false
+  tasks:
+    - name: Get GPU allocatable per node
+      ansible.builtin.command:
+        cmd: >
+          kubectl get nodes
+          -o custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: nodes_gpu_output
+      changed_when: false
+
+    - name: Display GPU allocatable per node
+      ansible.builtin.debug:
+        var: nodes_gpu_output.stdout_lines

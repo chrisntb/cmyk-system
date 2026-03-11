@@ -89,19 +89,21 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/05_initialize-k8s_p
 
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/06_cni_flannel_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/07_join-workers-to-k8s_plays.yaml
+
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/08_taint-workers_plays.yaml
 ```
 
 Add `Helm` to the cluster:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/08_helm_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/09_helm-repositories_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/09_helm_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/10_helm-repositories_plays.yaml
 ```
 
 Fetch the cluster's `.kube/config`:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/10_fetch-kube-config_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/11_fetch-kube-config_plays.yaml
 ```
 
 ### Create Cluster - Check Resource Usage
@@ -115,7 +117,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/04_k8s_nodes_resou
 Add `kueue` support for advanced job admission and placement logic integrating with the native scheduler:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/11_kueue_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_kueue_plays.yaml
 ```
 
 ### Create Cluster - KAI Scheduler
@@ -123,7 +125,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/11_kueue_plays.yaml
 Add `KAI Scheduler` support for advanced job admission and placement logic, replacing the native scheduler for certain workloads:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/12_kai-scheduler_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/13_kai-scheduler_plays.yaml
 ```
 
 ### Create Cluster - Nvidia GPU Operator
@@ -133,7 +135,7 @@ Add `Nvidia GPU Operator` to discover and configure GPU nodes.
 If the nodes are in a private network, set the job proxy configuration:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/13_nvidia-gpu-operator_plays.yaml \
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/14_nvidia-gpu-operator_plays.yaml \
   -e use_proxy=yes \
   -e http_proxy=${HTTP_PROXY} \
   -e pod_network_cidr=${POD_NETWORK_CIDR} \
@@ -144,8 +146,16 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/13_nvidia-gpu-opera
 OR if the nodes are NOT in a private network:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/13_nvidia-gpu-operator_plays.yaml \
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/14_nvidia-gpu-operator_plays.yaml \
   -e use_proxy=no
+```
+
+To debug issue with the Nvidia GPU Operator:
+
+```shell
+ssh ctl
+
+kubectl logs -n gpu-operator -l app=nvidia-driver-daemonset --tail=10000
 ```
 
 ## Check Cluster
@@ -155,6 +165,7 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/01_ping-hosts_play
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/02_k8s_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/03_k8s-nodes_plays.yaml
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/04_k8s_nodes_resource-usage_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/05_k8s-nodes_gpus_plays.yaml
 ```
 
 Check access to the cluster:

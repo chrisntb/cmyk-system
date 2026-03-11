@@ -19,6 +19,12 @@
               kai.scheduler/queue: {{ queue_name }}
           spec:
             restartPolicy: Never
+            nodeSelector:
+              cmyk.io/node-type: compute
+            tolerations:
+              - key: cmyk.io/compute-only
+                value: "true"
+                effect: NoSchedule
             containers:
             - name: nvidia-cuda
               image: nvidia/cuda:13.0.2-base-ubuntu22.04
