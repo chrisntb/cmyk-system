@@ -4,10 +4,9 @@
   become: false
   tasks:
     - name: Get GPU allocatable per node
-      ansible.builtin.command:
-        cmd: >
-          kubectl get nodes
-          -o custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu
+      ansible.builtin.shell:
+        cmd: kubectl get nodes -o custom-columns=NAME:.metadata.name,GPU:.status.allocatable.'nvidia\.com/gpu'
+        executable: /bin/bash
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
       register: nodes_gpu_output
