@@ -222,21 +222,29 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/03_kai-scheduler_tes
 ### Test Cluster - Simple Jobs
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/shell/01_create_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/shell/02_display_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/shell/01_create_plays.yaml \
+  -e pod_name="test-simple-shell-python-1"
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/shell/02_display_plays.yaml \
+  -e pod_name="test-simple-shell-python-1"
 
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/cpu/01_create_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/cpu/02_display_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/cpu/01_create_plays.yaml \
+  -e pod_name="test-simple-cpu-python-1"
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/cpu/02_display_plays.yaml \
+  -e pod_name="test-simple-cpu-python-1"
 
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/gpu/01_create_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/gpu/02_display_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/gpu/01_create_plays.yaml \
+  -e pod_name="test-simple-gpu-python-1"
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/simple/gpu/02_display_plays.yaml \
+  -e pod_name="test-simple-gpu-python-1"
 ```
 
 ### Test Cluster - Kueue Jobs
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kueue/gpu/01_create_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kueue/gpu/02_display_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kueue/gpu/01_create_plays.yaml \
+  -e pod_name="test-kueue-gpu-python-1"
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kueue/gpu/02_display_plays.yaml \
+  -e pod_name="test-kueue-gpu-python-1"
 ```
 
 ### Test Cluster - KAI Scheduler Jobs
@@ -244,8 +252,10 @@ ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kueue/gpu/02_display
 Run `KAI Scheduler` jobs:
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kai-scheduler/gpu/01_create_plays.yaml
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kai-scheduler/gpu/02_display_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kai-scheduler/gpu/01_create_plays.yaml \
+  -e pod_name="test-kai-gpu-python-1"
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/jobs/kai-scheduler/gpu/02_display_plays.yaml \
+  -e pod_name="test-kai-gpu-python-1"
 ```
 
 ## Monitor Cluster

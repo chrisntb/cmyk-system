@@ -41,6 +41,10 @@
           --version {{ kai_scheduler_version }}
           --namespace {{ kai_scheduler_namespace }}
           --create-namespace
+          --set tolerations[0].key=cmyk.io/system-only
+          --set tolerations[0].operator=Equal
+          --set tolerations[0].value=true
+          --set tolerations[0].effect=NoSchedule
       environment:
         KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
       register: helm_install_result

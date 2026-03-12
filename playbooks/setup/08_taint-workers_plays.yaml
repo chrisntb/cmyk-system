@@ -1,6 +1,6 @@
 ---
-- name: Setup - Gather compute worker hostnames
-  hosts: cluster_compute_workers
+- name: Setup - Gather worker hostnames
+  hosts: cluster_workers
   become: false
   gather_facts: false
   tasks:
@@ -14,7 +14,7 @@
       ansible.builtin.set_fact:
         k8s_node_name: "{{ node_hostname.stdout }}"
 
-- name: Setup - Taint Compute Worker Nodes
+- name: Setup - Label and Taint Worker Nodes
   hosts: cluster_controller
   become: false
   tasks:
@@ -38,6 +38,13 @@
         msg: "Cannot proceed without a running Kubernetes cluster"
       when: cluster_check.rc != 0
 
+    - name: Assert cluster_system_workers group is defined and non-empty
+      ansible.builtin.assert:
+        that:
+          - groups['cluster_system_workers'] is defined
+          - groups['cluster_system_workers'] | length > 0
+        fail_msg: "No hosts found in inventory group 'cluster_system_workers'"
+
     - name: Assert cluster_compute_workers group is defined and non-empty
       ansible.builtin.assert:
         that:
@@ -45,14 +52,33 @@
           - groups['cluster_compute_workers'] | length > 0
         fail_msg: "No hosts found in inventory group 'cluster_compute_workers'"
 
-    - name: Taint compute nodes (NoSchedule for non-tolerating pods)
+    - name: Taint system nodes (NoSchedule — keeps jobs off system workers)
       ansible.builtin.command:
-        cmd: kubectl taint nodes {{ hostvars[item]['k8s_node_name'] }} cmyk.io/compute-only=true:NoSchedule --overwrite
+        cmd: kubectl taint nodes {{ hostvars[item]['k8s_node_name'] }} cmyk.io/system-only=true:NoSchedule --overwrite
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      loop: "{{ groups['cluster_system_workers'] }}"
+      register: taint_result
+      changed_when: "'tainted' in taint_result.stdout"
+
+    - name: Remove legacy compute-only taint from compute nodes
+      ansible.builtin.command:
+        cmd: kubectl taint nodes {{ hostvars[item]['k8s_node_name'] }} cmyk.io/compute-only:NoSchedule-
       environment:
         KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
       loop: "{{ groups['cluster_compute_workers'] }}"
-      register: taint_result
-      changed_when: "'tainted' in taint_result.stdout"
+      register: untaint_result
+      failed_when: untaint_result.rc != 0 and 'not found' not in untaint_result.stderr
+      changed_when: untaint_result.rc == 0
+
+    - name: Label system nodes
+      ansible.builtin.command:
+        cmd: kubectl label nodes {{ hostvars[item]['k8s_node_name'] }} cmyk.io/node-type=system --overwrite
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      loop: "{{ groups['cluster_system_workers'] }}"
+      register: label_result
+      changed_when: "'labeled' in label_result.stdout"
 
     - name: Label compute nodes
       ansible.builtin.command:
@@ -63,14 +89,14 @@
       register: label_result
       changed_when: "'labeled' in label_result.stdout"
 
-    - name: Display tainted nodes
+    - name: Display all worker nodes
       ansible.builtin.command:
-        cmd: kubectl get nodes -l cmyk.io/node-type=compute -o wide
+        cmd: kubectl get nodes -l cmyk.io/node-type -o wide
       environment:
         KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
       register: nodes_status
       changed_when: false
 
-    - name: Show compute nodes
+    - name: Show worker nodes
       ansible.builtin.debug:
         var: nodes_status.stdout_lines

@@ -3,8 +3,14 @@
   hosts: cluster_controller
   become: false
   vars:
-    pod_name: "test-kueue-gpu-python"
+    pod_name: ""
   tasks:
+    - name: Assert required variables are set
+      ansible.builtin.assert:
+        that:
+          - pod_name | length > 0
+        fail_msg: "Required variables must be passed in: pod_name"
+
     - name: Get all pods across all namespaces
       ansible.builtin.command:
         cmd: kubectl get pods --all-namespaces
@@ -31,13 +37,13 @@
       register: resolved_pod
       changed_when: false
 
-    - name: Set pod_name to actual pod name
+    - name: Set actual_pod_name
       ansible.builtin.set_fact:
-        pod_name: "{{ resolved_pod.stdout }}"
+        actual_pod_name: "{{ resolved_pod.stdout }}"
 
-    - name: Describe pod {{ pod_name }}
+    - name: Describe pod {{ actual_pod_name }}
       ansible.builtin.command:
-        cmd: kubectl describe pod {{ pod_name }}
+        cmd: kubectl describe pod {{ actual_pod_name }}
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
       register: describe_output

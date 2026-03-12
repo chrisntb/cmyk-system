@@ -3,9 +3,15 @@
   hosts: cluster_controller
   become: false
   vars:
-    pod_name: "test-kueue-gpu-python"
+    pod_name: ""
     queue_name: "training"
   tasks:
+    - name: Assert required variables are set
+      ansible.builtin.assert:
+        that:
+          - pod_name | length > 0
+        fail_msg: "Required variables must be passed in: pod_name"
+
     - name: Create Pod {{ pod_name }}
       ansible.builtin.shell:
         cmd: |
@@ -23,14 +29,8 @@
             completions: 1
             template:
               spec:
-                nodeSelector:
-                  cmyk.io/node-type: compute
-                tolerations:
-                  - key: cmyk.io/compute-only
-                    value: "true"
-                    effect: NoSchedule
                 containers:
-                - name: nvidia-cuda
+                - name: {{ pod_name }}
                   image: nvidia/cuda:13.0.2-base-ubuntu22.04
                   envFrom:
                     - configMapRef:
@@ -76,7 +76,7 @@
                     cat <<'EOFFF' > main.py
                     import time
                     import torch
-                    def allocate(use_gpu_index, iterations=10, min_size=14336, max_size=18432, delay=0.1):
+                    def allocate(use_gpu_index, iterations=100, min_size=14336, max_size=18432, delay=0.1):
                         device = torch.device(f"cuda:{use_gpu_index}")
                         device_name = torch.cuda.get_device_name(use_gpu_index)
                         print(f"GPU {use_gpu_index} testing: {device_name}")
@@ -159,13 +159,13 @@
       register: resolved_pod
       changed_when: false
 
-    - name: Set pod_name to actual pod name
+    - name: Set actual_pod_name
       ansible.builtin.set_fact:
-        pod_name: "{{ resolved_pod.stdout }}"
+        actual_pod_name: "{{ resolved_pod.stdout }}"
 
-    - name: Describe pod {{ pod_name }}
+    - name: Describe pod {{ actual_pod_name }}
       ansible.builtin.command:
-        cmd: kubectl describe pod {{ pod_name }}
+        cmd: kubectl describe pod {{ actual_pod_name }}
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
       register: describe_output

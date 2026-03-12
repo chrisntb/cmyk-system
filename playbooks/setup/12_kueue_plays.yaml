@@ -59,3 +59,22 @@
     - name: Display Kueue controller status
       ansible.builtin.debug:
         var: rollout_status.stdout_lines
+
+    - name: Patch Kueue controller to tolerate system-only taint
+      ansible.builtin.command:
+        cmd: >
+          kubectl patch deployment kueue-controller-manager -n kueue-system
+          --type=json
+          -p '[{"op":"add","path":"/spec/template/spec/tolerations","value":[{"key":"cmyk.io/system-only","operator":"Equal","value":"true","effect":"NoSchedule"}]}]'
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: patch_result
+      changed_when: "'patched' in patch_result.stdout"
+
+    - name: Wait for Kueue controller rollout after patch
+      ansible.builtin.command:
+        cmd: kubectl rollout status deployment/kueue-controller-manager -n kueue-system --timeout=120s
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: rollout_status_patched
+      changed_when: false

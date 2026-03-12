@@ -11,9 +11,28 @@
   retries: 5
   delay: 0
 
-- name: Get logs {{ pod_name }}
+- name: Get pod phase {{ actual_pod_name }}
   ansible.builtin.command:
-    cmd: kubectl logs {{ pod_name }}
+    cmd: kubectl get pod {{ actual_pod_name }} -o jsonpath='{.status.phase}'
+  environment:
+    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+  register: _pod_phase
+  changed_when: false
+  when: _action_input.user_input | lower in ['logs', 'l']
+
+- name: Wait for container to start {{ actual_pod_name }}
+  ansible.builtin.command:
+    cmd: kubectl wait pod {{ actual_pod_name }} --for=condition=Ready --timeout=30s
+  environment:
+    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+  register: _wait_result
+  failed_when: false
+  changed_when: false
+  when: _action_input.user_input | lower in ['logs', 'l'] and _pod_phase.stdout not in ['Succeeded', 'Failed']
+
+- name: Get logs {{ actual_pod_name }}
+  ansible.builtin.command:
+    cmd: kubectl logs {{ actual_pod_name }}
   environment:
     KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
   register: _logs_again
@@ -25,9 +44,9 @@
     msg: "{{ _logs_again.stdout_lines }}"
   when: _action_input.user_input | lower in ['logs', 'l']
 
-- name: Delete job {{ pod_name }}
+- name: Delete job {{ actual_pod_name }}
   ansible.builtin.command:
-    cmd: kubectl delete pod {{ pod_name }}
+    cmd: kubectl delete pod {{ actual_pod_name }}
   environment:
     KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
   changed_when: true
