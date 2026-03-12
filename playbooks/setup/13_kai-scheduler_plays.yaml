@@ -34,18 +34,6 @@
         msg: "Cannot proceed without a running Kubernetes cluster"
       when: cluster_check.rc != 0
 
-    - name: Show KAI Scheduler chart values
-      ansible.builtin.command:
-        cmd: helm show values {{ kai_scheduler_chart }} --version {{ kai_scheduler_version }}
-      environment:
-        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
-      register: kai_chart_values
-      changed_when: false
-
-    - name: Display KAI chart values
-      ansible.builtin.debug:
-        var: kai_chart_values.stdout_lines
-
     - name: Install KAI Scheduler using Helm
       ansible.builtin.command:
         cmd: >
@@ -53,10 +41,11 @@
           --version {{ kai_scheduler_version }}
           --namespace {{ kai_scheduler_namespace }}
           --create-namespace
-          --set tolerations[0].key=cmyk.io/system-only
-          --set tolerations[0].operator=Equal
-          --set tolerations[0].value=true
-          --set tolerations[0].effect=NoSchedule
+          --set 'global.nodeSelector.cmyk\.io/node-type=system'
+          --set global.tolerations[0].key=cmyk.io/system-only
+          --set global.tolerations[0].operator=Equal
+          --set global.tolerations[0].value=true
+          --set global.tolerations[0].effect=NoSchedule
       environment:
         KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
       register: helm_install_result
@@ -77,34 +66,6 @@
     - name: Display KAI Scheduler status
       ansible.builtin.debug:
         var: helm_status.stdout_lines
-
-    - name: Get KAI Scheduler deployment names
-      ansible.builtin.command:
-        cmd: kubectl get deployments -n {{ kai_scheduler_namespace }} -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
-      environment:
-        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
-      register: kai_deployment_names
-      changed_when: false
-
-    - name: Patch KAI deployments to target system nodes
-      ansible.builtin.command:
-        cmd: >
-          kubectl patch deployment {{ item }} -n {{ kai_scheduler_namespace }}
-          --type=merge
-          -p '{"spec":{"template":{"spec":{"tolerations":[{"key":"cmyk.io/system-only","operator":"Equal","value":"true","effect":"NoSchedule"}],"nodeSelector":{"cmyk.io/node-type":"system"}}}}}'
-      environment:
-        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
-      loop: "{{ kai_deployment_names.stdout_lines | select('ne', '') | list }}"
-      register: kai_patch_result
-      changed_when: "'patched' in kai_patch_result.stdout"
-
-    - name: Wait for KAI deployments rollout after patch
-      ansible.builtin.command:
-        cmd: kubectl rollout status deployment/{{ item }} -n {{ kai_scheduler_namespace }} --timeout=120s
-      environment:
-        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
-      loop: "{{ kai_deployment_names.stdout_lines | select('ne', '') | list }}"
-      changed_when: false
 
     - name: Verify KAI deployment nodeSelectors
       ansible.builtin.command:
