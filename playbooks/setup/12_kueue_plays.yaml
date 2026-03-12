@@ -60,12 +60,12 @@
       ansible.builtin.debug:
         var: rollout_status.stdout_lines
 
-    - name: Patch Kueue controller to tolerate system-only taint
+    - name: Patch Kueue controller to target system nodes
       ansible.builtin.command:
         cmd: >
           kubectl patch deployment kueue-controller-manager -n kueue-system
-          --type=json
-          -p '[{"op":"add","path":"/spec/template/spec/tolerations","value":[{"key":"cmyk.io/system-only","operator":"Equal","value":"true","effect":"NoSchedule"}]}]'
+          --type=merge
+          -p '{"spec":{"template":{"spec":{"tolerations":[{"key":"cmyk.io/system-only","operator":"Equal","value":"true","effect":"NoSchedule"}],"nodeSelector":{"cmyk.io/node-type":"system"}}}}}'
       environment:
         KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
       register: patch_result

@@ -3,8 +3,8 @@ cluster_compute_workers:
   hosts:
     cluster_hpc_wrk_compute_1:
       ansible_host: hpc-wrk-compute-1
-    cluster_hpc_wrk_compute_2:
-      ansible_host: hpc-wrk-compute-2
+    cluster_hpc_wrk_gpu_1:
+      ansible_host: hpc-wrk-gpu-1
 
 cluster_system_workers:
   hosts:

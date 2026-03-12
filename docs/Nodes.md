@@ -63,7 +63,7 @@ Host hpc-wrk-compute-1
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
 
-Host hpc-wrk-compute-2
+Host hpc-wrk-gpu-1
     ProxyJump jump
     HostName 10.10.228.145
     User ubuntu
