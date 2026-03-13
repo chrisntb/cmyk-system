@@ -5,24 +5,11 @@
       Choose an action:
         logs (l)   - Show logs
         delete (d) - Delete
-        exit (e)   - Exit
+        quit (q)   - Exit
   register: _action_input
-  until: _action_input.user_input | lower in ['logs', 'l', 'delete', 'd', 'exit', 'e']
+  until: _action_input.user_input | lower in ['logs', 'l', 'delete', 'd', 'quit', 'q']
   retries: 5
   delay: 0
-
-- name: Wait for {{ resource_kind }} to be ready {{ actual_job_name }}
-  ansible.builtin.command:
-    cmd: >
-      kubectl wait {{ resource_kind }}/{{ actual_job_name }}
-      --for={{ 'condition=complete' if resource_kind == 'job' else 'condition=Ready' }}
-      --timeout=30s
-  environment:
-    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
-  register: _wait_result
-  failed_when: false
-  changed_when: false
-  when: _action_input.user_input | lower in ['logs', 'l']
 
 - name: Get logs {{ actual_job_name }}
   ansible.builtin.command:
