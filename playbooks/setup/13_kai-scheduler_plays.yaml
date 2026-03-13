@@ -44,7 +44,7 @@
           --set 'global.nodeSelector.cmyk\.io/node-type=system'
           --set global.tolerations[0].key=cmyk.io/system-only
           --set global.tolerations[0].operator=Equal
-          --set global.tolerations[0].value=true
+          --set-string global.tolerations[0].value=true
           --set global.tolerations[0].effect=NoSchedule
       environment:
         KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
