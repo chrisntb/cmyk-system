@@ -137,27 +137,13 @@
       register: kubectl_result
       changed_when: "'created' in kubectl_result.stdout"
 
-    - name: Resolve actual pod name for {{ pod_name }}
-      ansible.builtin.shell:
-        cmd: |
-          set -o pipefail
-          kubectl get pods --no-headers \
-            -o custom-columns=':metadata.name' \
-            --sort-by=.metadata.creationTimestamp \
-            | grep "^{{ pod_name }}-" | tail -1
-        executable: /bin/bash
-      environment:
-        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
-      register: resolved_pod
-      changed_when: false
-
-    - name: Set actual_pod_name
+    - name: Parse actual pod name from create output
       ansible.builtin.set_fact:
-        actual_pod_name: "{{ resolved_pod.stdout }}"
+        actual_job_name: "{{ kubectl_result.stdout | regex_search('pod/([^\\s]+)', '\\1') | first }}"
 
-    - name: Describe pod {{ actual_pod_name }}
+    - name: Describe pod {{ actual_job_name }}
       ansible.builtin.command:
-        cmd: kubectl describe pod {{ actual_pod_name }}
+        cmd: kubectl describe pod {{ actual_job_name }}
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
       register: describe_output

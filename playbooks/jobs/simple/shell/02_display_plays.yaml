@@ -34,16 +34,16 @@
         executable: /bin/bash
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
-      register: resolved_pod
+      register: resolved_job
       changed_when: false
 
-    - name: Set actual_pod_name
+    - name: Set actual_job_name
       ansible.builtin.set_fact:
-        actual_pod_name: "{{ resolved_pod.stdout }}"
+        actual_job_name: "{{ resolved_job.stdout | trim }}"
 
-    - name: Describe pod {{ actual_pod_name }}
+    - name: Describe pod {{ actual_job_name }}
       ansible.builtin.command:
-        cmd: kubectl describe pod {{ actual_pod_name }}
+        cmd: kubectl describe pod {{ actual_job_name }}
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
       register: describe_output
@@ -52,6 +52,10 @@
     - name: Print pod description
       ansible.builtin.debug:
         msg: "{{ describe_output.stdout_lines }}"
+
+    - name: Set resource kind
+      ansible.builtin.set_fact:
+        resource_kind: pod
 
     - name: Run action menu
       ansible.builtin.include_tasks: ../../tasks/display_menu.yaml

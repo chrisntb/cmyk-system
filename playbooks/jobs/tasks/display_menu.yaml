@@ -3,50 +3,44 @@
   ansible.builtin.pause:
     prompt: |
       Choose an action:
-        logs (l)   - Show job logs
-        delete (d) - Delete job
+        logs (l)   - Show logs
+        delete (d) - Delete
         exit (e)   - Exit
   register: _action_input
   until: _action_input.user_input | lower in ['logs', 'l', 'delete', 'd', 'exit', 'e']
   retries: 5
   delay: 0
 
-- name: Get pod phase {{ actual_pod_name }}
+- name: Wait for {{ resource_kind }} to be ready {{ actual_job_name }}
   ansible.builtin.command:
-    cmd: kubectl get pod {{ actual_pod_name }} -o jsonpath='{.status.phase}'
-  environment:
-    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
-  register: _pod_phase
-  changed_when: false
-  when: _action_input.user_input | lower in ['logs', 'l']
-
-- name: Wait for container to start {{ actual_pod_name }}
-  ansible.builtin.command:
-    cmd: kubectl wait pod {{ actual_pod_name }} --for=condition=Ready --timeout=30s
+    cmd: >
+      kubectl wait {{ resource_kind }}/{{ actual_job_name }}
+      --for={{ 'condition=complete' if resource_kind == 'job' else 'condition=Ready' }}
+      --timeout=30s
   environment:
     KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
   register: _wait_result
   failed_when: false
   changed_when: false
-  when: _action_input.user_input | lower in ['logs', 'l'] and _pod_phase.stdout not in ['Succeeded', 'Failed']
+  when: _action_input.user_input | lower in ['logs', 'l']
 
-- name: Get logs {{ actual_pod_name }}
+- name: Get logs {{ actual_job_name }}
   ansible.builtin.command:
-    cmd: kubectl logs {{ actual_pod_name }}
+    cmd: kubectl logs {{ resource_kind }}/{{ actual_job_name }}
   environment:
     KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
   register: _logs_again
   changed_when: false
   when: _action_input.user_input | lower in ['logs', 'l']
 
-- name: Print job logs
+- name: Print logs
   ansible.builtin.debug:
     msg: "{{ _logs_again.stdout_lines }}"
   when: _action_input.user_input | lower in ['logs', 'l']
 
-- name: Delete job {{ actual_pod_name }}
+- name: Delete {{ resource_kind }} {{ actual_job_name }}
   ansible.builtin.command:
-    cmd: kubectl delete pod {{ actual_pod_name }}
+    cmd: kubectl delete {{ resource_kind }} {{ actual_job_name }}
   environment:
     KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
   changed_when: true
