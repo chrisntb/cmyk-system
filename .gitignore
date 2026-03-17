@@ -4,6 +4,7 @@
 .ansible
 .claude/settings.local.json
 .secrets
+contrib
 # --------
 
 

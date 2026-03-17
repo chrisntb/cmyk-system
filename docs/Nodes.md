@@ -27,6 +27,25 @@ In order to run the playbooks you will need:
 - Aliases in your `${HOME}/.ssh/config`
 - Socks5 proxy
 
+Example nodes:
+
+```text
+Host ctl a08mlm001
+HostName 10.10.228.151
+
+Host mgt a08mlm002
+HostName 10.10.228.152
+
+Host hpc-wrk-system-1 a08mlm003
+HostName 10.10.228.153
+
+hpc-wrk-compute-1 a08mlm004
+HostName 10.10.228.154
+
+hpc-wrk-gpu-1 a08mgc005
+HostName 10.10.228.145
+```
+
 Example `SSH` config:
 
 ```shell
@@ -38,16 +57,25 @@ Host jump
 
 Host ctl
     ProxyJump jump
-    HostName 10.10.228.153
+    HostName 10.10.228.151
     User ubuntu
     IdentityFile <Your Private Key>
     IdentitiesOnly yes
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
 
-Host hpc-wrk-system-1
+Host mgt
     ProxyJump jump
     HostName 10.10.228.152
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+
+Host hpc-wrk-system-1
+    ProxyJump jump
+    HostName 10.10.228.153
     User ubuntu
     IdentityFile <Your Private Key>
     IdentitiesOnly yes
@@ -56,7 +84,7 @@ Host hpc-wrk-system-1
 
 Host hpc-wrk-compute-1
     ProxyJump jump
-    HostName 10.10.228.151
+    HostName 10.10.228.154
     User ubuntu
     IdentityFile <Your Private Key>
     IdentitiesOnly yes

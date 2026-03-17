@@ -5,7 +5,7 @@ This is WIP.
 ## Postgres Operator - CloudNativePG
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/13_cloud-native-pg_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/xx_cloud-native-pg_plays.yaml
 ```
 
 ## Gateway API

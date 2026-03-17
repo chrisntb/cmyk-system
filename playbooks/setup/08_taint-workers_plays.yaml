@@ -52,12 +52,28 @@
           - groups['cluster_compute_workers'] | length > 0
         fail_msg: "No hosts found in inventory group 'cluster_compute_workers'"
 
+    - name: Assert cluster_management_workers group is defined and non-empty
+      ansible.builtin.assert:
+        that:
+          - groups['cluster_management_workers'] is defined
+          - groups['cluster_management_workers'] | length > 0
+        fail_msg: "No hosts found in inventory group 'cluster_management_workers'"
+
     - name: Taint system nodes (NoSchedule — keeps jobs off system workers)
       ansible.builtin.command:
         cmd: kubectl taint nodes {{ hostvars[item]['k8s_node_name'] }} cmyk.io/system-only=true:NoSchedule --overwrite
       environment:
         KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
       loop: "{{ groups['cluster_system_workers'] }}"
+      register: taint_result
+      changed_when: "'tainted' in taint_result.stdout"
+
+    - name: Taint management nodes (NoSchedule — keeps jobs off management workers)
+      ansible.builtin.command:
+        cmd: kubectl taint nodes {{ hostvars[item]['k8s_node_name'] }} cmyk.io/management-only=true:NoSchedule --overwrite
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      loop: "{{ groups['cluster_management_workers'] }}"
       register: taint_result
       changed_when: "'tainted' in taint_result.stdout"
 
@@ -77,6 +93,15 @@
       environment:
         KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
       loop: "{{ groups['cluster_system_workers'] }}"
+      register: label_result
+      changed_when: "'labeled' in label_result.stdout"
+
+    - name: Label management nodes
+      ansible.builtin.command:
+        cmd: kubectl label nodes {{ hostvars[item]['k8s_node_name'] }} cmyk.io/node-type=management --overwrite
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      loop: "{{ groups['cluster_management_workers'] }}"
       register: label_result
       changed_when: "'labeled' in label_result.stdout"
 

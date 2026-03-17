@@ -158,6 +158,62 @@ ssh ctl
 kubectl logs -n gpu-operator -l app=nvidia-driver-daemonset --tail=10000
 ```
 
+### Create Cluster - Local Path Provisioner
+
+Required for testing Waldur. It's a lightweight Kubernetes storage provisioner from Rancher. When a PVC is created, it automatically provisions a hostPath volume on whichever node the pod is scheduled on — using a local directory (default /opt/local-path-provisioner) on that node's filesystem.
+
+Pros:
+
+- Zero dependencies, trivial to install
+- Works on any cluster with no shared storage infrastructure
+
+Cons:
+
+- Storage is node-local, if the pod moves to a different node, it loses access to its data
+- No replication, if the node dies, the data is gone
+- Not suitable for production stateful workloads that need durability or HA
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/15_local-path-provisioner_plays.yaml
+```
+
+To debug issue with the Local Path Provisioner:
+
+```shell
+kubectl get storageclass
+# NAME                   PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+# local-path (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  98s
+```
+
+### Create Cluster - Waldur
+
+Add `Waldur`
+
+> Cloud Services Brokerage Platform, enabling unified multi-cloud service delivery for Service Providers, Public Sector and Enterprises. - Single platform to automate cloud infrastructure and cloud applications delivery - State-of-the-art self-service portal for end customers - Realtime service adoption metrics and admin console for platform operator - Built-in accounting and integrations with third-party billing systems - Integrated customer support ticketing with third-party helpdesk backends
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/16_waldur_plays.yaml
+```
+
+To debug issue with the Waldur Operator:
+
+```shell
+kubectl get pods -n waldur-system
+
+kubectl get storageclass
+kubectl get pvc -n waldur-system
+
+kubectl describe pod waldur-postgresql-0 -n waldur-system | tail -20
+kubectl describe pod waldur-rabbitmq-0 -n waldur-system | tail -20
+
+kubectl get pods -n waldur-system -l job-name=waldur-mastermind-init-whitelabeling-job
+kubectl get job waldur-mastermind-init-whitelabeling-job -n waldur-system
+
+kubectl logs -n waldur-system -l job-name=waldur-mastermind-init-whitelabeling-job --follow
+
+kubectl describe pod waldur-mastermind-beat-78978876b8-cgqlq -n waldur-system | tail -30
+```
+
 ## Check Cluster
 
 ```shell

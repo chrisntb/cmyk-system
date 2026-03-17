@@ -1,0 +1,76 @@
+---
+- name: Setup - Waldur
+  hosts: cluster_controller
+  become: false
+  vars:
+    # https://github.com/waldur/waldur-helm/tags
+    waldur_helm_repository_name: "waldur-charts"
+    # waldur_helm_repository_url: "https://waldur.github.io/waldur-helm"
+    waldur_helm_repository_url: "https://chrisntb.github.io/waldur-helm"
+    waldur_helm_chart: "waldur-charts/waldur"
+    waldur_helm_chart_version: "8.0.7-rc.7"
+    waldur_namespace: "waldur-system"
+    waldur_alias: "waldur"
+    waldur_values_file: "{{ playbook_dir }}/waldur-values.yaml"
+  tasks:
+    - name: Get regular user's home directory
+      ansible.builtin.command:
+        cmd: echo $HOME
+      register: user_home
+      changed_when: false
+
+    - name: Check if Kubernetes cluster is reachable
+      ansible.builtin.command:
+        cmd: kubectl cluster-info
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: cluster_check
+      failed_when: false
+      changed_when: false
+
+    - name: Display message if cluster is not reachable
+      ansible.builtin.debug:
+        msg: "Kubernetes cluster is not initialized or reachable. Please initialize the cluster before running this playbook."
+      when: cluster_check.rc != 0
+
+    - name: Fail if cluster is not reachable
+      ansible.builtin.fail:
+        msg: "Cannot proceed without a running Kubernetes cluster"
+      when: cluster_check.rc != 0
+
+    - name: Add Waldur Helm repository
+      ansible.builtin.command:
+        cmd: helm repo add --force-update {{ waldur_helm_repository_name }} {{ waldur_helm_repository_url }}
+      register: waldur_repo_result
+      changed_when: "'has been added' in waldur_repo_result.stdout"
+      failed_when:
+        - waldur_repo_result.rc != 0
+
+    - name: Install Waldur Operator using Helm
+      ansible.builtin.command:
+        cmd: >
+          helm upgrade --install {{ waldur_alias }} {{ waldur_helm_chart }}
+          -f {{ waldur_values_file }}
+          --version {{ waldur_helm_chart_version }}
+          --namespace {{ waldur_namespace }}
+          --create-namespace
+          --timeout 15m
+          --kubeconfig {{ user_home.stdout }}/.kube/config
+      register: helm_install_result
+      changed_when: "'STATUS: deployed' in helm_install_result.stdout"
+      failed_when:
+        - helm_install_result.rc != 0
+
+    - name: Display installation result
+      ansible.builtin.debug:
+        var: helm_install_result.stdout_lines
+
+    - name: Check Waldur Operator deployment status
+      ansible.builtin.command:
+        cmd: helm status {{ waldur_alias }} --namespace {{ waldur_namespace }} --kubeconfig {{ user_home.stdout }}/.kube/config
+      register: helm_status
+      changed_when: false
+
+    - name: Display Waldur Operator status
+      ansible.builtin.debug:
+        var: helm_status.stdout_lines

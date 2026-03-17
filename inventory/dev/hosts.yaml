@@ -11,8 +11,14 @@ cluster_system_workers:
     cluster_hpc_wrk_system_1:
       ansible_host: hpc-wrk-system-1
 
+cluster_management_workers:
+  hosts:
+    cluster_management:
+      ansible_host: mgt
+
 cluster_workers:
   children:
+    cluster_management_workers:
     cluster_compute_workers:
     cluster_system_workers:
 
