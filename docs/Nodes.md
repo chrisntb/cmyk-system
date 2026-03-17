@@ -68,7 +68,7 @@ Host mgt-wrk-1
     ProxyJump jump
     HostName 10.10.228.152
     User ubuntu
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile <Your Private Key>
     IdentitiesOnly yes
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
