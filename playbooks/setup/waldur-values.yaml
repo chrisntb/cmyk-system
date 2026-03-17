@@ -3,9 +3,23 @@ homeportScheme: "https"
 
 postgresql:
   enabled: true
+  nodeSelector:
+    cmyk.io/node-type: management
+  tolerations:
+    - key: "cmyk.io/management-only"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
 
 rabbitmq:
   enabled: true
+  nodeSelector:
+    cmyk.io/node-type: management
+  tolerations:
+    - key: "cmyk.io/management-only"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
 
 nodeSelector:
   cmyk.io/node-type: management
