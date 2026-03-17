@@ -1,3 +1,6 @@
+apiScheme: "https"
+homeportScheme: "https"
+
 postgresql:
   enabled: true
 

@@ -160,6 +160,8 @@ kubectl logs -n gpu-operator -l app=nvidia-driver-daemonset --tail=10000
 
 ### Create Cluster - Local Path Provisioner
 
+Add `Local Path Provisioner`.
+
 Required for testing Waldur. It's a lightweight Kubernetes storage provisioner from Rancher. When a PVC is created, it automatically provisions a hostPath volume on whichever node the pod is scheduled on — using a local directory (default /opt/local-path-provisioner) on that node's filesystem.
 
 Pros:
@@ -185,14 +187,84 @@ kubectl get storageclass
 # local-path (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  98s
 ```
 
+### Create Cluster - MetalLB
+
+Add `MetalLB`.
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/16_metallb_plays.yaml \
+  -e metallb_ip_pool=10.10.228.242-10.10.228.242
+```
+
+### Create Cluster - NGINX Ingress
+
+Add `NGINX Ingress`.
+
+```shell
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/17_nginx-ingress_plays.yaml
+```
+
+Check the nginx ingress controller has picked up the external IP applied by `MetalLB`:
+
+```shell
+kubectl get svc -n ingress-nginx
+# NAME                                 TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)                      AGE
+# ingress-nginx-controller             LoadBalancer   10.107.60.116   10.10.228.242   80:31162/TCP,443:31267/TCP   82m
+# ingress-nginx-controller-admission   ClusterIP      10.110.43.62    <none>          443/TCP                      82m
+```
+
+Test the external IP:
+
+```shell
+# Jump host
+curl -v -k -H "Host: waldur.local" https://10.10.228.242/
+
+# Locally
+vi /etc/hosts
+# 10.10.228.151  waldur.local
+curl -v -k --proxy socks5://localhost:8123 https://waldur.local/
+```
+
 ### Create Cluster - Waldur
 
-Add `Waldur`
+Add `Waldur`.
 
 > Cloud Services Brokerage Platform, enabling unified multi-cloud service delivery for Service Providers, Public Sector and Enterprises. - Single platform to automate cloud infrastructure and cloud applications delivery - State-of-the-art self-service portal for end customers - Realtime service adoption metrics and admin console for platform operator - Built-in accounting and integrations with third-party billing systems - Integrated customer support ticketing with third-party helpdesk backends
 
 ```shell
-ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/16_waldur_plays.yaml
+ansible-playbook -i inventory/dev/hosts.yaml playbooks/setup/18_waldur_plays.yaml \
+  -e http_proxy=${HTTP_PROXY} \
+  -e pod_network_cidr=${POD_NETWORK_CIDR} \
+  -e service_cidr=${SERVICE_CIDR} \
+  -e node_ips=${NODE_IPS}
+```
+
+Configure `Waldur`:
+
+```shell
+kubectl get pods -n waldur-system
+# NAME                                             READY   STATUS      RESTARTS       AGE
+# waldur-homeport-645f8d778-nvbvh                  1/1     Running     0              101m
+# waldur-mastermind-api-f666dc4f8-kbdzc            1/1     Running     0              101m
+# waldur-mastermind-beat-78978876b8-cgqlq          1/1     Running     0              101m
+# waldur-mastermind-init-whitelabeling-job-6978m   0/1     Completed   0              73m
+# waldur-mastermind-worker-7f486bbf4d-xrz79        1/1     Running     10 (79m ago)   101m
+# waldur-postgresql-0                              1/1     Running     0              3h57m
+# waldur-rabbitmq-0                                1/1     Running     0              76m
+
+kubectl exec -it waldur-mastermind-worker-7f486bbf4d-xrz79 -n waldur-system -- /bin/bash
+waldur-mastermind-worker-7f486bbf4d-xrz79:/$ waldur createstaffuser -u admin -p xJ...2r -e admin@example.com
+# {"event": "Registered digest provider: team_changes", "timestamp": "2026-03-17T02:33:01.892617Z", "logger": "waldur_core.structure.digest_providers", "level": "debug"}
+# {"event": "Registered digest provider: resource_usage", "timestamp": "2026-03-17T02:33:01.896530Z", "logger": "waldur_core.structure.digest_providers", "level": "debug"}
+# {"event": "Registered digest provider: end_date_info", "timestamp": "2026-03-17T02:33:01.896677Z", "logger": "waldur_core.structure.digest_providers", "level": "debug"}
+# {"event": true, "event_type": "token_created", "event_context": {"affected_user_uuid": "da7eeb8f79bb47ac8bfada600ffdbe52", "affected_user_full_name": "", "affected_user_native_name": "", "affected_user_username": "admin", "affected_user_is_staff": "True", "affected_user_is_support": "False", "affected_user_token_lifetime": "None"}, "timestamp": "2026-03-17T02:33:23.571774Z", "logger": "waldur_core.logging.event_logger", "level": "info"}
+# {"event": true, "event_type": "user_creation_succeeded", "event_context": {"affected_user_uuid": "da7eeb8f79bb47ac8bfada600ffdbe52", "affected_user_full_name": "", "affected_user_native_name": "", "affected_user_username": "admin", "affected_user_is_staff": "True", "affected_user_is_support": "False", "affected_user_token_lifetime": "None"}, "timestamp": "2026-03-17T02:33:23.589896Z", "logger": "waldur_core.logging.event_logger", "level": "info"}
+# {"event": "No FreeIPA profile found for user admin.", "timestamp": "2026-03-17T02:33:23.611119Z", "logger": "waldur_freeipa.handlers", "level": "debug"}
+# {"event": "Skipping OpenPortal handler because plugin is disabled.", "timestamp": "2026-03-17T02:33:23.611324Z", "logger": "waldur_openportal.handlers", "level": "debug"}
+# {"event": "Skipping OpenPortal handler because plugin is disabled.", "timestamp": "2026-03-17T02:33:23.653003Z", "logger": "waldur_openportal.handlers", "level": "debug"}
+# {"event": true, "event_type": "user_password_updated", "event_context": {"affected_user_uuid": "da7eeb8f79bb47ac8bfada600ffdbe52", "affected_user_full_name": "", "affected_user_native_name": "", "affected_user_username": "admin", "affected_user_is_staff": "True", "affected_user_is_support": "False", "affected_user_token_lifetime": "3600"}, "timestamp": "2026-03-17T02:33:24.539807Z", "logger": "waldur_core.logging.event_logger", "level": "info"}
+# {"event": "Skipping OpenPortal handler because plugin is disabled.", "timestamp": "2026-03-17T02:33:24.551990Z", "logger": "waldur_openportal.handlers", "level": "debug"}
+# User admin has been created.
 ```
 
 To debug issue with the Waldur Operator:

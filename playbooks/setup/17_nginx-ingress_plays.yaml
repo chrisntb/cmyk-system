@@ -1,0 +1,76 @@
+---
+- name: Setup - Nginx Ingress Controller
+  hosts: cluster_controller
+  become: false
+  vars:
+    # https://github.com/kubernetes/ingress-nginx/releases
+    nginx_ingress_helm_repository_name: "ingress-nginx"
+    nginx_ingress_helm_repository_url: "https://kubernetes.github.io/ingress-nginx"
+    nginx_ingress_helm_chart: "ingress-nginx/ingress-nginx"
+    nginx_ingress_helm_chart_version: "4.15.0"
+    nginx_ingress_namespace: "ingress-nginx"
+    nginx_ingress_alias: "ingress-nginx"
+  tasks:
+    - name: Get regular user's home directory
+      ansible.builtin.command:
+        cmd: echo $HOME
+      register: user_home
+      changed_when: false
+
+    - name: Check if Kubernetes cluster is reachable
+      ansible.builtin.command:
+        cmd: kubectl cluster-info
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: cluster_check
+      failed_when: false
+      changed_when: false
+
+    - name: Fail if cluster is not reachable
+      ansible.builtin.fail:
+        msg: "Cannot proceed without a running Kubernetes cluster"
+      when: cluster_check.rc != 0
+
+    - name: Add nginx ingress Helm repository
+      ansible.builtin.command:
+        cmd: helm repo add --force-update {{ nginx_ingress_helm_repository_name }} {{ nginx_ingress_helm_repository_url }}
+      register: repo_result
+      changed_when: "'has been added' in repo_result.stdout"
+      failed_when:
+        - repo_result.rc != 0
+
+    - name: Install nginx ingress controller using Helm
+      ansible.builtin.command:
+        cmd: >
+          helm upgrade --install {{ nginx_ingress_alias }} {{ nginx_ingress_helm_chart }}
+          --set controller.allowSnippetAnnotations=true
+          --set controller.config.annotations-risk-level=Critical
+          --set controller.nodeSelector."cmyk\.io/node-type"=management
+          --set controller.tolerations[0].key="cmyk.io/management-only"
+          --set controller.tolerations[0].operator="Equal"
+          --set controller.tolerations[0].value="true"
+          --set controller.tolerations[0].effect="NoSchedule"
+          --version {{ nginx_ingress_helm_chart_version }}
+          --namespace {{ nginx_ingress_namespace }}
+          --create-namespace
+          --kubeconfig {{ user_home.stdout }}/.kube/config
+      register: helm_install_result
+      changed_when: "'STATUS: deployed' in helm_install_result.stdout"
+      failed_when:
+        - helm_install_result.rc != 0
+
+    - name: Display installation result
+      ansible.builtin.debug:
+        var: helm_install_result.stdout_lines
+
+    - name: Check nginx ingress controller status
+      ansible.builtin.command:
+        cmd: kubectl get pods -n {{ nginx_ingress_namespace }}
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: pods_status
+      changed_when: false
+
+    - name: Display nginx ingress controller status
+      ansible.builtin.debug:
+        var: pods_status.stdout_lines
