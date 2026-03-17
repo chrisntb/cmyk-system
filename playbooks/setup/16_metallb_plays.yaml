@@ -1,0 +1,108 @@
+---
+- name: Setup - MetalLB
+  hosts: cluster_controller
+  become: false
+  vars:
+    # https://github.com/metallb/metallb/releases
+    metallb_helm_repository_name: "metallb"
+    metallb_helm_repository_url: "https://metallb.github.io/metallb"
+    metallb_helm_chart: "metallb/metallb"
+    metallb_helm_chart_version: "0.14.9"
+    metallb_namespace: "metallb-system"
+    metallb_alias: "metallb"
+    metallb_ip_pool: ""
+  tasks:
+    - name: Assert required variables are set
+      ansible.builtin.assert:
+        that:
+          - metallb_ip_pool | length > 0
+        fail_msg: "Required variables must be passed in: metallb_ip_pool"
+
+    - name: Get regular user's home directory
+      ansible.builtin.command:
+        cmd: echo $HOME
+      register: user_home
+      changed_when: false
+
+    - name: Check if Kubernetes cluster is reachable
+      ansible.builtin.command:
+        cmd: kubectl cluster-info
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: cluster_check
+      failed_when: false
+      changed_when: false
+
+    - name: Fail if cluster is not reachable
+      ansible.builtin.fail:
+        msg: "Cannot proceed without a running Kubernetes cluster"
+      when: cluster_check.rc != 0
+
+    - name: Add MetalLB Helm repository
+      ansible.builtin.command:
+        cmd: helm repo add --force-update {{ metallb_helm_repository_name }} {{ metallb_helm_repository_url }}
+      register: repo_result
+      changed_when: "'has been added' in repo_result.stdout"
+      failed_when:
+        - repo_result.rc != 0
+
+    - name: Install MetalLB using Helm
+      ansible.builtin.command:
+        cmd: >
+          helm upgrade --install {{ metallb_alias }} {{ metallb_helm_chart }}
+          --version {{ metallb_helm_chart_version }}
+          --namespace {{ metallb_namespace }}
+          --create-namespace
+          --kubeconfig {{ user_home.stdout }}/.kube/config
+      register: helm_install_result
+      changed_when: "'STATUS: deployed' in helm_install_result.stdout"
+      failed_when:
+        - helm_install_result.rc != 0
+
+    - name: Wait for MetalLB controller to be ready
+      ansible.builtin.command:
+        cmd: >
+          kubectl rollout status deployment/metallb-controller
+          --namespace {{ metallb_namespace }}
+          --timeout 120s
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      changed_when: false
+
+    - name: Configure MetalLB IP address pool
+      ansible.builtin.command:
+        cmd: kubectl apply -f -
+        stdin: |
+          apiVersion: metallb.io/v1beta1
+          kind: IPAddressPool
+          metadata:
+            name: default-pool
+            namespace: {{ metallb_namespace }}
+          spec:
+            addresses:
+              - {{ metallb_ip_pool }}
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: pool_result
+      changed_when: "'configured' in pool_result.stdout or 'created' in pool_result.stdout"
+
+    - name: Configure MetalLB L2 advertisement
+      ansible.builtin.command:
+        cmd: kubectl apply -f -
+        stdin: |
+          apiVersion: metallb.io/v1beta1
+          kind: L2Advertisement
+          metadata:
+            name: default-advertisement
+            namespace: {{ metallb_namespace }}
+          spec:
+            ipAddressPools:
+              - default-pool
+      environment:
+        KUBECONFIG: "{{ user_home.stdout }}/.kube/config"
+      register: advert_result
+      changed_when: "'configured' in advert_result.stdout or 'created' in advert_result.stdout"
+
+    - name: Display installation result
+      ansible.builtin.debug:
+        var: helm_install_result.stdout_lines
