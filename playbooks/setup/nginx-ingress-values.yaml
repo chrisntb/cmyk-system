@@ -1,0 +1,11 @@
+controller:
+  allowSnippetAnnotations: true
+  config:
+    annotations-risk-level: "Critical"
+  nodeSelector:
+    cmyk.io/node-type: "management"
+  tolerations:
+    - key: "cmyk.io/management-only"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"

@@ -8,7 +8,7 @@
     # waldur_helm_repository_url: "https://waldur.github.io/waldur-helm"
     waldur_helm_repository_url: "https://chrisntb.github.io/waldur-helm"
     waldur_helm_chart: "waldur-charts/waldur"
-    waldur_helm_chart_version: "8.0.7-rc.7"
+    waldur_helm_chart_version: "8.0.6"
     waldur_namespace: "waldur-system"
     waldur_alias: "waldur"
     waldur_values_local: "{{ playbook_dir }}/waldur-values.yaml"

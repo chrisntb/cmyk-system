@@ -217,15 +217,15 @@ Test the external IP:
 
 ```shell
 # Jump host
-curl -v -k -H "Host: waldur.local" https://10.10.228.242/
+curl -v -k https://10.10.228.242/
 
 # Locally
-vi /etc/hosts
-# 10.10.228.151  waldur.local
-curl -v -k --proxy socks5://localhost:8123 https://waldur.local/
+curl -v -k --proxy socks5://localhost:8123 https://10.10.228.242/
 ```
 
 ### Create Cluster - Waldur
+
+Check the forked `Waldur` Helm chart is available, see `https://chrisntb.github.io/waldur-helm/index.yaml`.
 
 Add `Waldur`.
 
@@ -252,18 +252,26 @@ kubectl get pods -n waldur-system
 # waldur-postgresql-0                              1/1     Running     0              3h57m
 # waldur-rabbitmq-0                                1/1     Running     0              76m
 
-kubectl exec -it waldur-mastermind-worker-7f486bbf4d-xrz79 -n waldur-system -- /bin/bash
-waldur-mastermind-worker-7f486bbf4d-xrz79:/$ waldur createstaffuser -u admin -p xJ...2r -e admin@example.com
-# {"event": "Registered digest provider: team_changes", "timestamp": "2026-03-17T02:33:01.892617Z", "logger": "waldur_core.structure.digest_providers", "level": "debug"}
-# {"event": "Registered digest provider: resource_usage", "timestamp": "2026-03-17T02:33:01.896530Z", "logger": "waldur_core.structure.digest_providers", "level": "debug"}
-# {"event": "Registered digest provider: end_date_info", "timestamp": "2026-03-17T02:33:01.896677Z", "logger": "waldur_core.structure.digest_providers", "level": "debug"}
-# {"event": true, "event_type": "token_created", "event_context": {"affected_user_uuid": "da7eeb8f79bb47ac8bfada600ffdbe52", "affected_user_full_name": "", "affected_user_native_name": "", "affected_user_username": "admin", "affected_user_is_staff": "True", "affected_user_is_support": "False", "affected_user_token_lifetime": "None"}, "timestamp": "2026-03-17T02:33:23.571774Z", "logger": "waldur_core.logging.event_logger", "level": "info"}
-# {"event": true, "event_type": "user_creation_succeeded", "event_context": {"affected_user_uuid": "da7eeb8f79bb47ac8bfada600ffdbe52", "affected_user_full_name": "", "affected_user_native_name": "", "affected_user_username": "admin", "affected_user_is_staff": "True", "affected_user_is_support": "False", "affected_user_token_lifetime": "None"}, "timestamp": "2026-03-17T02:33:23.589896Z", "logger": "waldur_core.logging.event_logger", "level": "info"}
-# {"event": "No FreeIPA profile found for user admin.", "timestamp": "2026-03-17T02:33:23.611119Z", "logger": "waldur_freeipa.handlers", "level": "debug"}
-# {"event": "Skipping OpenPortal handler because plugin is disabled.", "timestamp": "2026-03-17T02:33:23.611324Z", "logger": "waldur_openportal.handlers", "level": "debug"}
-# {"event": "Skipping OpenPortal handler because plugin is disabled.", "timestamp": "2026-03-17T02:33:23.653003Z", "logger": "waldur_openportal.handlers", "level": "debug"}
-# {"event": true, "event_type": "user_password_updated", "event_context": {"affected_user_uuid": "da7eeb8f79bb47ac8bfada600ffdbe52", "affected_user_full_name": "", "affected_user_native_name": "", "affected_user_username": "admin", "affected_user_is_staff": "True", "affected_user_is_support": "False", "affected_user_token_lifetime": "3600"}, "timestamp": "2026-03-17T02:33:24.539807Z", "logger": "waldur_core.logging.event_logger", "level": "info"}
-# {"event": "Skipping OpenPortal handler because plugin is disabled.", "timestamp": "2026-03-17T02:33:24.551990Z", "logger": "waldur_openportal.handlers", "level": "debug"}
+kubectl exec -it waldur-mastermind-worker-785b4fcdbf-w6p7t -n waldur-system -- /bin/bash
+waldur-mastermind-worker-785b4fcdbf-w6p7t:/$ waldur createstaffuser -u admin -p xJ...2r -e admin@example.com
+# {"event": "Registered digest provider: team_changes", "timestamp": "2026-03-17T07:17:44.473632Z", "logger": "waldur_core.structure.digest_providers", "level": "debug"}
+# {"event": "Registered digest provider: resource_usage", "timestamp": "2026-03-17T07:17:44.476986Z", "logger": "waldur_core.structure.digest_providers", "level": "debug"}
+# {"event": "Registered digest provider: end_date_info", "timestamp": "2026-03-17T07:17:44.477123Z", "logger": "waldur_core.structure.digest_providers", "level": "debug"}
+# /usr/local/lib/python3.12/site-packages/prettytable.py:74: SyntaxWarning: invalid escape sequence '\['
+#   _re = re.compile("\033\[[0-9;]*m")
+# /usr/local/lib/python3.12/site-packages/prettytable.py:800: SyntaxWarning: invalid escape sequence '\{'
+#   self.vertical_char = random.choice("~!@#$%^&*()_+|-=\{}[];':\",./;<>?")
+# /usr/local/lib/python3.12/site-packages/prettytable.py:801: SyntaxWarning: invalid escape sequence '\{'
+#   self.horizontal_char = random.choice("~!@#$%^&*()_+|-=\{}[];':\",./;<>?")
+# /usr/local/lib/python3.12/site-packages/prettytable.py:802: SyntaxWarning: invalid escape sequence '\{'
+#   self.junction_char = random.choice("~!@#$%^&*()_+|-=\{}[];':\",./;<>?")
+# {"event": true, "event_type": "token_created", "event_context": {"affected_user_uuid": "7a305db833334988b2880746fdd303bb", "affected_user_full_name": "", "affected_user_native_name": "", "affected_user_username": "admin", "affected_user_is_staff": "True", "affected_user_is_support": "False", "affected_user_token_lifetime": "None"}, "timestamp": "2026-03-17T07:18:04.920713Z", "logger": "waldur_core.logging.event_logger", "level": "info"}
+# {"event": true, "event_type": "user_creation_succeeded", "event_context": {"affected_user_uuid": "7a305db833334988b2880746fdd303bb", "affected_user_full_name": "", "affected_user_native_name": "", "affected_user_username": "admin", "affected_user_is_staff": "True", "affected_user_is_support": "False", "affected_user_token_lifetime": "None"}, "timestamp": "2026-03-17T07:18:04.935454Z", "logger": "waldur_core.logging.event_logger", "level": "info"}
+# {"event": "No FreeIPA profile found for user admin.", "timestamp": "2026-03-17T07:18:04.952530Z", "logger": "waldur_freeipa.handlers", "level": "debug"}
+# {"event": "Skipping OpenPortal handler because plugin is disabled.", "timestamp": "2026-03-17T07:18:04.952723Z", "logger": "waldur_openportal.handlers", "level": "debug"}
+# {"event": "Skipping OpenPortal handler because plugin is disabled.", "timestamp": "2026-03-17T07:18:04.991225Z", "logger": "waldur_openportal.handlers", "level": "debug"}
+# {"event": true, "event_type": "user_password_updated", "event_context": {"affected_user_uuid": "7a305db833334988b2880746fdd303bb", "affected_user_full_name": "", "affected_user_native_name": "", "affected_user_username": "admin", "affected_user_is_staff": "True", "affected_user_is_support": "False", "affected_user_token_lifetime": "3600"}, "timestamp": "2026-03-17T07:18:05.875412Z", "logger": "waldur_core.logging.event_logger", "level": "info"}
+# {"event": "Skipping OpenPortal handler because plugin is disabled.", "timestamp": "2026-03-17T07:18:05.886176Z", "logger": "waldur_openportal.handlers", "level": "debug"}
 # User admin has been created.
 ```
 
@@ -284,6 +292,18 @@ kubectl get job waldur-mastermind-init-whitelabeling-job -n waldur-system
 kubectl logs -n waldur-system -l job-name=waldur-mastermind-init-whitelabeling-job --follow
 
 kubectl describe pod waldur-mastermind-beat-78978876b8-cgqlq -n waldur-system | tail -30
+```
+
+Test the access using the external IP:
+
+```shell
+# Jump host
+curl -v -k -H "Host: waldur.local" https://10.10.228.242/
+
+# Locally
+vi /etc/hosts
+# 10.10.228.242  waldur.local
+curl -v -k --proxy socks5://localhost:8123 https://waldur.local/
 ```
 
 ## Check Cluster

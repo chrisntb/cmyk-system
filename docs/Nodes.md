@@ -33,7 +33,7 @@ Example nodes:
 Host ctl a08mlm001
 HostName 10.10.228.151
 
-Host mgt a08mlm002
+Host mgt-wrk-1 a08mlm002
 HostName 10.10.228.152
 
 Host hpc-wrk-system-1 a08mlm003
@@ -64,7 +64,7 @@ Host ctl
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
 
-Host mgt
+Host mgt-wrk-1
     ProxyJump jump
     HostName 10.10.228.152
     User ubuntu

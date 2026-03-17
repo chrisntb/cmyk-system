@@ -39,17 +39,17 @@
       failed_when:
         - repo_result.rc != 0
 
+    - name: Copy nginx ingress values file to controller
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/nginx-ingress-values.yaml"
+        dest: "/tmp/nginx-ingress-values.yaml"
+        mode: '0644'
+
     - name: Install nginx ingress controller using Helm
       ansible.builtin.command:
         cmd: >
           helm upgrade --install {{ nginx_ingress_alias }} {{ nginx_ingress_helm_chart }}
-          --set controller.allowSnippetAnnotations=true
-          --set controller.config.annotations-risk-level=Critical
-          --set controller.nodeSelector."cmyk\.io/node-type"=management
-          --set controller.tolerations[0].key="cmyk.io/management-only"
-          --set controller.tolerations[0].operator="Equal"
-          --set controller.tolerations[0].value="true"
-          --set controller.tolerations[0].effect="NoSchedule"
+          -f /tmp/nginx-ingress-values.yaml
           --version {{ nginx_ingress_helm_chart_version }}
           --namespace {{ nginx_ingress_namespace }}
           --create-namespace

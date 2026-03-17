@@ -13,8 +13,8 @@ cluster_system_workers:
 
 cluster_management_workers:
   hosts:
-    cluster_management:
-      ansible_host: mgt
+    cluster_mgt_wrk_1:
+      ansible_host: mgt-wrk-1
 
 cluster_workers:
   children:
