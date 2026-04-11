@@ -1,6 +1,6 @@
 # Tools
 
-This component requires the tools documented here.
+This project requires the development tools documented here.
 
 ## Canonical Multipass
 

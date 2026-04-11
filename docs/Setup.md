@@ -1,6 +1,8 @@
 # Setup
 
-To work with this component, ensure you have the tools available, see [Tools.md](Tools.md), then:
+After cloning this repository, ensure you have the development tools available, see [Tools.md](Tools.md).
+
+## Python Virtual Environment
 
 ```shell
 # Add a convenient alias in your shell profile
