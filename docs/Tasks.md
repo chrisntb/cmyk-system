@@ -49,10 +49,10 @@ Run the node health checks:
 ansible-playbook -i inventory/dev/hosts.yaml playbooks/checks/01_ping-hosts_plays.yaml
 ```
 
-## K8s Cluster
+## Create K8s Cluster
 
 See [K8s Cluster](k8s/README.md).
 
-## Management Services
+## Add Management Services
 
 See [Management Services](mgt/README.md).
