@@ -24,15 +24,16 @@ venv
 deactivate
 ```
 
-The first time you use this component, or if you upgrade the Ansible version in `pyproject.toml`:
+Check for outdated dependencies:
 
 ```shell
 # Note 'uv' automatically infers the virtual environment
-# -> you don't need to have the virtual environment active for the following cmds to work correctly
+# -> You don't need to have the virtual environment active for the following cmds to work correctly
 
-# Resolve dependencies and regenerate uv.lock
-uv lock
-# Download and install exact dependency versions from uv.lock
+uv tree --outdated --depth=1
+
+# If you updated dependencies versions in pyproject.toml
+# -> Sync again to pin the new dependencies in file uv.lock
 uv sync
 ```
 

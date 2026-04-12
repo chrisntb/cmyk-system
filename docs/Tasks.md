@@ -18,14 +18,21 @@ uv sync
 # Activate the virtual environment
 # -> For this shell alias see the 'Prerequisites' instructions
 venv
+
+# Deactivate the virtual environment
+deactivate
 ```
 
 Check for outdated dependencies:
 
 ```shell
+# Note 'uv' automatically infers the virtual environment
+# -> You don't need to have the virtual environment active for the following cmds to work correctly
+
 uv tree --outdated --depth=1
 
-# Optionally sync again after updating dependencies versions in pyproject.toml
+# If you updated dependencies versions in pyproject.toml
+# -> Sync again to pin the new dependencies in file uv.lock
 uv sync
 ```
 
